@@ -1,0 +1,437 @@
+cifX-Toolkit Version History:
+=============================
+
+Known Problems:
+ - Automatic file upload for PCI hardware not implemented
+
+V1.4.0.0
+-----------------
+ - Improved ISR handler by reading only necessary handshake registers on PCI cards
+ - Fixed LINT warning in DEV_DoSystemStart(), multiple definition of ptSysChannel
+ - Fixed LINT warning by adding type casts
+ - Fixed xSysdeviceInfo()/CIFX_INFO_CMD_SYSTEM_CHANNEL_BLOCK for use with SPM, removed access via the "DPM pointer"
+ - Fixed xSysdeviceExtendedMemory() missing convert/HWIF function when reading tSystemState
+ - Renamed "md5" files to "Hilmd5" preventing conflicts with custom components using same file name
+ - xChannelIORead()/xChannelIOWrite() does not return COM flag state in "uncontrolled mode"
+ - DEV_IsCommunicating() removed re-read of NCF_Handshake flags for SPM speed improvment
+
+V1.3.0.0
+-----------------
+ - Fixed DSR Handler channel loop counting preventing one additional iteration
+ - Fixed compiler warnings created by implicit data conversion on 64bit systems
+ - Fixed Lint warnings in cifXInit.c
+ - Fixed notification call "post reset event" (eCIFX_TOOLKIT_EVENT_POSTRESET) done to late
+ - Added system state trace log information (e.g. DPM cookie) during start-up
+ - Added include in cifXUser.h surrounding <#if _MSC_VER> allowing none Microsoft compiler using -wundef
+
+V1.2.0.1
+-----------------
+ - Remove single line comment (not allowed in ANSI-C)
+
+V1.2.0.0
+-----------------
+ - Changed function interface of the hardware read/write functions (PFN_HWIF_MEMCPY). Using void pointer instead of uint32_t
+   for address parameter, skips address calculation for memory mapped devices on 64bit systems.
+ - xChannelSyncState() may not work on flash-based devices (if no reset is done during initialization)
+   or after xSysdeviceReset()
+ - Added target independent protocol implementation for serial DPM handling
+ - xChannelRegisterNotification/CIFX_NOTIFY_COM_STATE now calls always the user callback to signal the actual COM flag state
+ - Interrupt mode with shared PCI interrupts may result in invalid flags being handled in seldom cases
+ - Added support for IAR C/C++ Compiler (ARM Cores only)
+ - Added support for armcc Compiler (previously known as ARM RealView)
+ - Always check cookie before evaluation of READY flag to prevent misinterpretation of invalid DPM content
+ - Updated 2nd Stage Loader to V1.4.17.0
+ - Introduced eCHIP_TYPE_NETX52 to distinguish between netX51 and netX52
+ - Introduced initial wait for bootloader startup before invoking POST_BOOTLOADER event
+ - Mailbox notification may cause illegal memory access due to missing hardware interface abstraction and endianness conversion
+ - DMA mode does not work properly on big endian machines due to missing endianness conversion
+
+V1.1.5.0
+-----------------
+ - DEV_TransferPacket() may drop unexpected packets
+ - DEV_WaitForBitstate_Poll / DEV_WaitForSynchState_Poll may wait one additional cycle before returning
+ - netX51/52 RAM Based device support
+   ATTENTION: DPM Timings might need to be adjusted in eCIFX_TOOLKIT_EVENT_PRE_BOOTLOADER notification callback,
+              as RDY signal is not activated by ROM loader. If the host has strict timings (e.g. NXPCA-PCI), the 
+              DPM won't be readable.
+              
+              Sample code:
+                case eCIFX_TOOLKIT_EVENT_PRE_BOOTLOADER:
+                  if(eCHIP_TYPE_NETX51 == ptDevInst->eChipType)
+                  {
+                    /* netX51 has a timing configuration without rdy/busy, so we need to adjust it here, to be able to access 
+                       memory starting at offset 0x100 */
+                    NETX51_DPM_CONFIG_AREA_T* ptDpmConfig = (NETX51_DPM_CONFIG_AREA_T*)ptDevInst->pbDPM;
+
+                    ptDpmConfig->ulDpmRdyCfg    = MSK_NX56_dpm_rdy_cfg_rdy_pol |           /* DPM is ready when external RDY-signal is high. */
+                                                 (1 << SRT_NX56_dpm_rdy_cfg_rdy_drv_mode); /* Push-Pull Mode */
+                    ptDpmConfig->ulDpmTimingCfg = 0; /* Disable setup times and filter. */
+                  }
+                  break;
+ - Updated 2nd Stage Loader to V1.4.16.0
+
+V1.1.4.0
+-----------------
+ - Fixed memory leak when using netX100 RAM based devices (e.g. cifX)
+ - Fixed memory leak if unsupported DPM channel was found
+ - Updated 2nd Stage Loader to V1.4.12.0
+
+V1.1.3.0
+-----------------
+ - Added Lint fixes and re-ordered handling in DSR function
+ - Added excplicit casts to allow compiling using C++ compiler (Tested using Visual Studio)
+ - Suppress checking of sync handshake flags in DEV_IsReady/IsRunning and DEV_GetHandshakeBitState for performance reasons on slow busses
+ - Updated 2nd Stage Loader to V1.4.10.0
+
+V1.1.2.0
+-----------------
+ - Added notification callback for COM flag state
+
+V1.1.1.0
+-----------------
+ - Added command packet to set the device time during hardware startup, if a RTC is aveilable
+ - Added MRAM API functions
+
+V1.1.0.0
+-----------------
+ - Fix: Lock DEV_DoSystemStart() againt DSR to prevent writes to handshake flags while in reset, if an IRQ occurs
+ - Fix: DEV_DoSystemStart() now clears internal COS Flags in Interrupt mode
+ - Updated unsigned long data types to uint32_t
+ - New header file added to separate declarations for cifX hardware functions from cifXToolkit.h
+ - Added Hardware interface layer (supports serial DPM access e.g. via SPI, RDY/BSY DPM workaround)
+ - Added optional validation of pointers and handles passed to toolkit functions (CIFX_TOOLKIT_PARAMETER_CHECK)
+ - Added Debug Trace output of device information (DevNr/SerialNr/SlotNr)
+ - Added eCIFX_DEVICE_DONT_TOUCH device type to use cards without any changes
+ - Added xSysdeviceBootstart() / DEV_DoSystemBootstart() function to switch into bootloader mode
+
+V1.0.4.0
+-----------------
+ - Starting automatically downloaded configuration database may fail for flash based devices
+
+V1.0.3.0
+-----------------
+ - Handshake Flags may get out of synch when doing a system start in interrupt mode, if
+   firmware asserts interrupt at unexpected time
+ - Module downloading to flash / starting from flash may timeout when for large modules
+
+V1.0.2.0
+-----------------
+ - xChannelDMAState() comments fixed
+ - netJACK 100 added to PCI definitions header file
+ - ChannelDemo() / xChannelIOWrite() uses now abSendData[] instead of abRecvData[]
+ - cifXCreateChannels(), fixed memory leak if channel was not created
+ - xSysdeviceReset() / xChannelReset(CIFX_SYSTEMSTART) may leave COS flags in invalid
+   state in interrupt mode (influences loadable modules)
+
+V1.0.1.0
+-----------------
+ - DSR Handler crashes due to invalid access on a communication channel instance
+ - xSysdeviceReset is now locked against ISR/DSR or Cyclic Thread. Earlier versions
+   may write invalid handshake flags during a system start if the cyclic thread or IRQ
+   accesses the flags during this time.
+ - Downloading loadable modules (.NXO) may fail on larger files due to the last 
+   confirmation packet taking longer than expected
+
+V1.0.0.0
+-----------------
+ - xChannelSyncState parameters updated (added Timeout)
+ - SyncState Error codes added
+ - Loadable modules may not work (depends on implementation of OS_Strncpy)
+ - Fixed GCC compiler warning (deferencing pointer breaks strict-aliasing rules)
+ - If start of Firmware fails (e.g. wrong HW options) the card will not
+   be rejected by toolkit. It will be used as a card with a system device only.
+ - xChannelPLCMemoryPointer may not working correctly due to an invalid parameter 
+   passed to OS_MapUserPointer / UnmapUserPointer
+ - GetMDRequest may fail depending on the implementation of OS_Strncpy
+ - xChannelPLCActivateRead / Write did not lock access to handshake flags
+ - cifXHandleWarmstart() using same buffer for send/receive in TransferPacket() fixed
+ - DEV_DeleteFile(), OS_Strncpy() size of copied data must include the necessary 0 character
+ - DEV_Download() uses twice the packet timeout (=10s) for the last packet if modules are loaded
+ 
+V0.10.1.0
+--------------------------
+ - Interrupt mode may miss first interrupt after initialization, due to readout 
+   of sync handshake flags
+
+V0.10.0.0
+--------------------------
+ - Functions for SyncMode added
+ - Interrupt Handling changed to support notification callbacks for user (xChannelRegisterNotification)
+
+V0.9.9.0
+--------------------------
+ - 64-Bit Support added (ISO-C99 header file "stdint.h" is now needed to provide
+   fixed-width data types)
+
+B0.953
+--------------------------
+09.02.2010
+ - ISA card handling improved by adding an aditional DEV_ReadHandshakeFlags()
+   in cifXCreateChannels()
+ 
+B0.952
+--------------------------
+25.01.2010
+ - cifXEndianess.h. added additional braces into the conversion macros
+
+B0.951
+--------------------------
+03.12.2009
+ - DEV_GetMBXState(), receive count handling fixed
+
+B0.950
+--------------------------
+06.11.2009
+ - DMA support added
+ - Slot number handling added
+
+B0.946
+--------------------------
+01.10.2009
+ - DEV_ReadHostState extended by fReadHostCOS to prevent the read back of the
+   host COS flags when they are not changed by the hardware
+ - Handling of COS flags improved (BUS_STATE / CONFIG_LOCK / INITIALIZE) and handled now
+   in DEV_DoHostCOSChange()
+ - DEV_DoChannelInit() now checks if the READY flag is gone and than waits until it is back
+
+B0.945
+--------------------------
+31.08.2009
+ - cifXStartModule() fixed if no channel is available during first start
+ - HilPCIDefs.h included
+ - cifXHWFunctions(), TRUE/FALSE definition replaced with 1/0  
+ - cifXDownload(), CIFX_BUFFER_TOO_SHORT fixed by using now the max. packet size for confirmation packets
+
+B0.944
+--------------------------
+07.07.2009
+ - Interrupt handling in ISR and DPC fixed/improved
+ - xChannelBusState(), COM_FLAG handling in conjunction with
+   timeout settings fixed/improved
+ - xChannelBusState() handling moved to DEV_HostState() function to be callable as a low level function
+   timeout settings fixed/improved
+
+B0.943
+--------------------------
+28.04.2009
+ - Module download improved for comX
+   
+B0.942
+--------------------------
+13.02.2009
+ - DEV_CheckCOSFlags is now locked against DEV_DoChannelInit,
+   to prevent COS Flag evaluation while a channel init is running
+
+B0.941
+--------------------------
+30.01.2009
+ - Big Endian Host support added via CIFX_TOOLKIT_BIGENDIAN define
+ - New parameter (eDeviceType) added to device instance to allow 
+   DPM cards (e.g. NXHX500/50) to only use RAM (like cifX does).
+   Previous versions always expected a serial flash on DPM based devices
+ - New parameter (eChipType) added to device instance, so functions like
+   USER_GetBootloader can check if a bootloader for a netX50 or netX100/500
+   is requested.
+ - netX50 support added
+
+20.01.2009
+ - "Loadable Modules" support for comX included
+
+B0.940
+--------------------------
+12.12.2008
+ - PRLIMINARY support for "Loadable Modules" included
+
+
+V0.931 (under Development)
+--------------------------
+10.12.2008
+ - cifXCreateChannels()
+   answer to warmstart commands now excepted with size != 0 preventing error 0x800A0012
+
+27.11.2008
+ - IO mode RCX_IO_MODE_BUFF_DEV_CTRL included
+
+24.11.2008
+ - cifXTKitISRHandler() extended by new parameter fPCIIgnoreGlobalIntFlag
+ - Filename cases corrected to support case sensitive operating systems
+
+17.06.2008
+ - While loops extended by Sleep(0)
+
+B0.930 (under Development)
+--------------------------
+16.05.2008
+ - xChannelOpen() error return extended CIFX_INVALID_CHANNEL
+ - OS_MapUserPointer() and OS_UnmapUserPointer() now have a new parameter pvOSDependent
+
+07.05.2008
+ - Signalling interrupts from DSR changed, so that systems 
+   that may get interrupted during DSR are working
+ - DSRhandler changed to signal netX Handshake bit changes (since previous irq)
+   instead of Host/Netx flag differences. This allows DEV_WaitForBitstate_Irq
+ 
+06.05.2008
+ - xDriverErrorDescripton did not return error description, 
+   due to internal array size miscalculation29.04.2008
+ - DOWNLOAD_MODE_LICENSECODE added
+28.04.2008
+ - PLC Functions did not return NO_COMFLAG error
+
+B0.923 (under Development)
+--------------------------
+02.04.2008
+ - Wait functions in cifXHWFunctions reviewed
+ - xChannelReset(CIFX_CHANNEL_INIT) will only check if the 
+   channel becomes READY. Checking for RUNNING removed.
+ - cifXStopDevice(), deletion of the system device interrupt events included
+21.02.2008
+ - Error return in xDriverMemoryPointer() and xChannelPLCMemoryPtr() fixed
+
+V0.922 (under Development)
+--------------------------
+04.09.2007
+ - Setup program:
+   - Bug fix, which solves the Warmstart.dat files deletion if more than 
+     two cards are using it, included (this fix was lost in V0.921)
+   - Firmware name and version now shows "-- not available --" for .mod files
+   PROFINET slave parameters:
+   - Input/output size changed to 1024 Byte
+   - Device type string limited to 25 characters
+ - Test program:
+   - Scroll bar for the receive packet text control included, to allow viewing of packets,
+     which are bigger than the control.
+ - All version information changed to V0.922
+
+V0.921 (under Development)
+--------------------------
+26.07.2007
+ - Download now supports downloading to serial flash on target (if available)
+   Filename passed to download function will be used to identify target (e.g. "SYSFLASH")
+10.07.2007
+ - cifX Test crashed, if no device was selected in dialog
+03.05.2007
+ - On DPM based devices a the driver always creates a communication channel. Even without a firmware.
+   This can lead into blue screen if such a channel is access from a user application. 
+26.04.2007
+ - Function xChannelBusState() now checks the
+   COMMUNICATION-Flag if a timeout is given.
+   Without a timeout, only BUS ON /OFF is processed
+25.04.2007
+ - Reading security FLASH and placing data into the
+   DPM (bootloader and firmware)
+ - File header handling included
+ - Prevent multiple firmware files (only the first one
+   is usable) included
+ - Test of DPM and PCI hardware
+19.04.2007
+ - MD5 checking for files included (calculated on hardware and firmware)
+ - Download for DPM based hardware reworked and
+   files are only be downloaded if they are not existing
+   or different
+ - Download mode now choosen by the file extension
+ - New 2nd stage bootloader detection and handling included
+18.04.2007
+ - API functions for 
+   * xSysdeviceUpload/Download, xSysdeviceFileFindFirst/FindNext
+   * xChannelUpload/Download, xChannelFileFindFirst/FindNext 
+   extended by two new parameters, to be able to deliver unhandled
+   receive packets during these functions
+ - Definitions for CIFX_COLDSTART and CIFX_WARMSTART changed 
+   to CIFX_SYSTEMSTART and CIFX_CHANNELINIT
+ - New COS-Flag handling included
+ - Function xChannelBusState() included
+
+V0.920 (under Development)
+--------------------------
+11.04.2007
+ - C++ style comments removed, missing comment end cifXHWFunctions() fixed
+10.04.2007
+ - Prepared interrupt handling (provided in cifXInterrupt.c)
+ - Update DEVICEINSTANCE structure to provide infos needed for IRQ handling
+ - Added OS Dependent functions for Enabling/Disabling device interrupt (needed in OS Abstraction layer)
+ - Added CIFx Device Driver dependent include files into OS_Includes.h
+ - Added the following functions to cifX API
+   * xChannelIOInfo
+   * xSysdeviceReset
+   * xChannelFindFirstFile
+   * xChannelFindNextFile
+   * xChannelUpload
+   * xSysdeviceFindFirstFile
+   * xSysdeviceFindNextFile
+   * xSysdeviceUpload
+ - Added cifXTkitCyclic timer to Toolkit API, used to poll the COS flags on a polled cifX device.
+   Needs to be called by user cyclically (recommended time is approx. 500ms)
+ - Added Device Functions used by new API functions
+   * DEV_Upload function
+   * DEV_DoWarmstart
+   * DEV_DoColdStart
+ - Prepared interrupt handling via 2 functions needing to be called by user it IRQ is needed
+   * cifXTKitISRHandler
+   * cifXTKitDSRHandler
+ - Renamed USER_ErrorTrace to USER_Trace and changed signature to provide more flexibility.
+   Toolkit now uses a global variable g_ulTraceLevel to adjust the amount of trace messages.
+ - Some hardware dependent functions did poll the Handshake flags if interrupt is enabled
+ - DEV_ReadHandshakeFlag did check the COS flags wrong
+ - DEV_TriggerWatchdog illegally returned CIFX_DEV_NOT_RUNNING even if the device was running
+ - DEV_IsCommunicating did not set CIFX_DEV_NO_COMFLAG correctly
+ - USER_GetInterruptsEnable added, to give the user the possibility to enable interrupts on a 
+   per device base
+
+
+V0.912 (09.01.2007)
+-------------------
+ - Function bodies for
+   xChannelGetSendPacket
+   xChannelConfigLock
+   xChannelReset 
+   included
+- Internal version number set to V0.912
+
+V0.911 (26.10.2006)
+-------------------
+ - UNREFERENCED_PARAMETER macro fixed
+
+V0.910 (19.10.2006)
+-------------------
+ - Compiler Warning fixes for GNU compiler
+ - VxWorks combatible HANDLE now used (HANDLE-->CIFXHANDLE, API change)
+ - CifxErrors.h now uses C-Style comments
+ - Structure Packing fixed for MidSys_Public.h
+ - Some toolkit functions now static, as they are only used internally
+
+V0.903 (13.10.2006)
+-------------------
+- DEV_WaitForBitState_Poll's timeout changed. 
+  - Starttime was read inside poll loop
+  - Starttime read into unsigned long, for overflow detection
+    a long variable is needed
+
+- DEV_ReadHandshakeFlags() wrong HCF_NETX_COS_ACK flag fixed 
+
+- Fixed bit state waiting timeout for timer overflows
+
+- Warmstart handling included  
+
+- OS_MapUserPointer/OS_UnmapUserPointer added for DPM mapping to application
+
+
+V0.902 (06.10.2006)
+-------------------
+- Put/GetPacket now checks for Ready flag
+
+- Fixed size calculation for OS_MemRealloc calls
+
+- Host Handshake Flags did not update COS flags
+
+- Host Handshake Flags are now read earlier, to 
+  allow Ready check on Firmware read packets
+
+- Calculation of the mailbox size for system channel
+  and communication channel fixed (sizeof......)
+
+
+V0.900 BETA (10.08.2006)
+------------------------
+- first version
+
