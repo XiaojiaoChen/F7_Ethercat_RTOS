@@ -101,6 +101,8 @@
 #define AD_RESET_GPIO_Port GPIOG
 #define AD_CS_Pin GPIO_PIN_9
 #define AD_CS_GPIO_Port GPIOC
+#define SPI6_CS_Pin GPIO_PIN_10
+#define SPI6_CS_GPIO_Port GPIOA
 #define AD_SCK_Pin GPIO_PIN_10
 #define AD_SCK_GPIO_Port GPIOC
 #define AD_MISO_Pin GPIO_PIN_11

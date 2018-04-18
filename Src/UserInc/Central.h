@@ -29,6 +29,18 @@ enum CONTROLLER_TYPE{
 
 
 
+struct PROCESS_TIME{
+	int32_t ADTime;
+	int32_t AngleTime;
+	int32_t DATime;
+	int32_t PressureTime;
+	int32_t RugulatorTime;
+	int32_t EthercatIOTime;
+	int32_t EthercatPacketTime;
+	int32_t ControlTime;
+	int32_t taskTime1;
+	int32_t taskTime2;
+};
 
 /***********State*********************************/
 
@@ -45,6 +57,7 @@ typedef struct CENTRAL_STRUCT
 	struct PRESSURE_HUB_STRUCT *ptPressureHub;
 	struct ANGLE_HUB_STRUCT	*ptAngleHub;
 	struct CONTROLLER_HUB_STRUCT *ptControlHub;
+	struct PROCESS_TIME process_time;
 	void (*updateData)(struct CENTRAL_STRUCT *ptCentral);
 	void (*control)(struct CENTRAL_STRUCT *ptCentral);
 	void (*applyControl)(struct CENTRAL_STRUCT *ptCentral);

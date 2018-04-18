@@ -7,7 +7,7 @@
 
 
 typedef struct AD_DEVICE_STRUCT{
-	uint16_t uChannel[8];
+	int16_t uChannel[8];
 	float fChannel[8];
 	float fMinVoltage;
 	float fMaxVoltage;

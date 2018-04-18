@@ -82,8 +82,8 @@ HW060ABSOLUTE_DEVICE *HW060PAAA5(AD_DEVICE *ptADDev, uint16_t ADPort, uint16_t j
 	ptHW060PAA5->ADPort = ADPort;
 	ptHW060PAA5->base.jointNum = jointNum;
 	ptHW060PAA5->base.position = seq;
-	ptHW060PAA5->VMax = 0.9 * 5.0f; //output 10%-90% of Vsupply
-	ptHW060PAA5->VMin = 0.1 * 5.0f;
+	ptHW060PAA5->VMax = 0.9 * 4.959f; //output 10%-90% of Vsupply
+	ptHW060PAA5->VMin = 0.1 * 4.959f;
 	ptHW060PAA5->PMax = 60 * PaPerPSI;
 	ptHW060PAA5->PMin = 0;
 	ptHW060PAA5->base.getPressure = HW060PAAA5_getPressure;

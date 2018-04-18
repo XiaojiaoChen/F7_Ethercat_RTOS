@@ -249,11 +249,11 @@ static void AS5311_readRawSPI(AS5311_DEVICE *ptAS5311Dev)
 {
 	uint16_t AS5311RawData;
 
-	//first read
-	AS5311_CS_LOW(ptAS5311Dev);
-	HAL_SPI_TransmitReceive(ptAS5311Dev->hspi,(uint8_t *)(&DummyWord),(uint8_t *)(&AS5311RawData),1,1);
-	AS5311_CS_HIGH(ptAS5311Dev);
-	delay_us(1);
+//	//first read
+//	AS5311_CS_LOW(ptAS5311Dev);
+//	HAL_SPI_TransmitReceive(ptAS5311Dev->hspi,(uint8_t *)(&DummyWord),(uint8_t *)(&AS5311RawData),1,1);
+//	AS5311_CS_HIGH(ptAS5311Dev);
+//	delay_us(1);
 
 	//second read. for the case that returned data is last read command.
 	AS5311_CS_LOW(ptAS5311Dev);
@@ -442,6 +442,8 @@ ANGLE_HUB *ANGLEHUB(CENTRAL *ptCentral)
 	/*Add one encoder, attached to SPI, TIME, EXTI, JointNum 0*/
 	AS5311_DEVICE *ptAS5311Dev1 = AS5311(&hspi_ANGLE,ANGLE_CS_GPIO_Port,ANGLE_CS_Pin,&htim_ANGLE,ENCODER_INDEX_GPIO_Port,ENCODER_INDEX_Pin,0);
 	ptAngleHub->attach(ptAngleHub,(ANGLE_DEVICE *)ptAS5311Dev1);
+
+
 
 //	/*Add one encoder, attached to SPI, TIME, EXTI, JointNum 1*/
 //	ptAS5311Dev1 = AS5311(&hspi_ANGLE,ANGLE_CS_GPIO_Port,ANGLE_CS_Pin,&htim_ANGLE,ENCODER_INDEX_GPIO_Port,ENCODER_INDEX_Pin,0);

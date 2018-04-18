@@ -16,9 +16,8 @@ CENTRAL gCentral;
 
 /*update sensor data, to be sent in the EthercatCyclicIODataHandler()*/
 static void central_updateData(struct CENTRAL_STRUCT *ptCentral) {
-	int32_t local_c1, local_c2;
-	int32_t timeoutAD = 100;
-	int32_t periodUpdate = 200;
+	int32_t lc1, lc2,lc3,lc4;
+	int32_t timeoutAD = 50;//actually, all 8 channels take only 25us to get DMA data back
 	static int32_t CyclicDelayTime = 500;
 
 	/*This is to ensure the timer to have enough ticks before its overflow and reset during this process*/
@@ -26,9 +25,9 @@ static void central_updateData(struct CENTRAL_STRUCT *ptCentral) {
 		TTTimer.Instance->CNT = 0;
 
 	/*record the start Tick*/
-	local_c1 = TIC();
+	lc1 = TIC();
 
-	/*get all Analog, none blocking, should check dataFlag for data receiving done*/
+	/*get all Analog, none blocking, should check dataFlag for data receiving done, before using it*/
 	ptCentral->ADDevice.getVoltage(&ptCentral->ADDevice);
 
 	/*get Angles, blocking*/
@@ -36,11 +35,16 @@ static void central_updateData(struct CENTRAL_STRUCT *ptCentral) {
 
 	/*get IMU blocking*/
 
+	lc2 = TIC();
+	ptCentral->process_time.ADTime = lc2-lc1;
+
 	/*wait for Analog read accomplished, or Tick timeout*/
 	while (ptCentral->ADDevice.ucDataFlag == 0) {
-		local_c2 = TIC();
-		if ((local_c2 - local_c1) > timeoutAD)
+		lc2 = TIC();
+		if ((lc2 - lc1) > timeoutAD){
+			AD_CS_GPIO_Port->BSRR=AD_CS_Pin;
 			break;
+		}
 	}
 
 	/*get all pressure, since Analog pressure sensor just simply read AD results*/
@@ -49,13 +53,18 @@ static void central_updateData(struct CENTRAL_STRUCT *ptCentral) {
 	/*store data to Ethercat Buffer*/
 	for (int i = 0; i < ptCentral->ptAngleHub->Num; i++) {
 		ptCentral->ptSensorData->angle[i] = ptCentral->ptAngleHub->angles[i];
-		ptCentral->ptSensorData->velocity[i] = 1.23; //ptCentral->angleHub->velocity[i];
-		ptCentral->ptSensorData->acceleration[i] = 10.2; //ptCentral->angleHub->acceleration[i];
-		ptCentral->ptSensorData->pressure[i][0] = 124.7;
-		ptCentral->ptSensorData->pressure[i][1] = 133.5;
+		ptCentral->ptSensorData->velocity[i] = ptCentral->ptAngleHub->velocity[i];
+		ptCentral->ptSensorData->acceleration[i] = ptCentral->ptAngleHub->acceleration[i];
+		ptCentral->ptSensorData->pressure[i][0] = ptCentral->ptPressureHub->Pressure[i][0];
+		ptCentral->ptSensorData->pressure[i][1] = ptCentral->ptPressureHub->Pressure[i][1];
 	}
 	//add Slave timestamp
-	ptCentral->ptSensorData->timeTick = HAL_GetTick();
+
+	ptCentral->ptSensorData->timeTick = TIC();
+
+
+	lc2 = TIC();
+	ptCentral->process_time.PressureTime = lc2-lc1;
 
 //	/*wait for predefined Update period. This is to ensure EthercatCyclicIODataHandler to have a fixed starting time*/
 //	while (1) {

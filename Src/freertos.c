@@ -47,7 +47,6 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include <Central.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #include "cmsis_os.h"
@@ -76,7 +75,8 @@ osStaticThreadDef_t EthCyclicTaskControlBlock;
 
 /* USER CODE BEGIN Variables */
 int EthCyclicTask_Ready = 0;
-extern CENTRAL gCentral;
+CENTRAL *ptCentral = &gCentral;
+
 
 /* USER CODE END Variables */
 
@@ -155,34 +155,47 @@ void sendTaskFunc(void const * argument)
 {
 
   /* USER CODE BEGIN sendTaskFunc */
+	extern int32_t ADtime;
 	TickType_t xLastWakeTime=xTaskGetTickCount();;
 	TickType_t sendTaskPeriod=pdMS_TO_TICKS(100);   //100ms Period
-	AS5311_DEVICE *ptAngle1=(AS5311_DEVICE *)(gCentral.ptAngleHub->angleDevices[0]);
+	AS5311_DEVICE *ptAngle1=(AS5311_DEVICE *)(ptCentral->ptAngleHub->angleDevices[0]);
   /* Infinite loop */
   for(;;)
   {
 	  /*************100us*********************/
-	  printf("%.3f %.6f %.6f %.6f     %u  %d  %d  %d        %d %.6f %.6f      %d %.6f %.6f %.3f %.3f\r\n",
+	  printf("%.3f %.6f %.6f %.6f     %d %d %d %d %d %d %d  %d  %2.5f %2.5f %2.5f %2.5f %2.5f %2.5f %2.5f  %2.5f  %6.0f %6.0f   %ld %ld  %ld %ld %ld %u\r\n",
 	  			   HAL_GetTick()/1000.0f,
-	  			   gCentral.ptSensorData->angle[0],
+	  			   ptCentral->ptSensorData->angle[0],
 				   ptAngle1->AngleABZ,
 				   ptAngle1->AngleSPI,
 
-	  			   ptAngle1->rawSPI,
-	  			   ptAngle1->Index,
-				   __AS5311_RawAB(ptAngle1),
-				   ptAngle1->ABLast,
+				   ptCentral->ADDevice.uChannel[0],
+				   ptCentral->ADDevice.uChannel[1],
+				   ptCentral->ADDevice.uChannel[2],
+				   ptCentral->ADDevice.uChannel[3],
+				   ptCentral->ADDevice.uChannel[4],
+				   ptCentral->ADDevice.uChannel[5],
+				   ptCentral->ADDevice.uChannel[6],
+				   ptCentral->ADDevice.uChannel[7],
 
-				   ptAngle1->SPIIndex,
-				   ptAngle1->SPIFraction,
-				   ptAngle1->SPIOffsetFrac,
+				   ptCentral->ADDevice.fChannel[0],
+				   ptCentral->ADDevice.fChannel[1],
+				   ptCentral->ADDevice.fChannel[2],
+				   ptCentral->ADDevice.fChannel[3],
+				   ptCentral->ADDevice.fChannel[4],
+				   ptCentral->ADDevice.fChannel[5],
+				   ptCentral->ADDevice.fChannel[6],
+				   ptCentral->ADDevice.fChannel[7],
 
-				   ptAngle1->ABIndex,
-				   ptAngle1->ABFraction,
-				   ptAngle1->ABOffsetFrac,
+	  	  	  	   ptCentral->ptSensorData->pressure[0][0],
+				   ptCentral->ptSensorData->pressure[0][1],
 
-	  	  	  	   gCentral.ptNominalData->pressure[0][0],
-				   gCentral.ptNominalData->pressure[0][1]);
+	  	  	  	  ADtime,
+				  ptCentral->process_time.ADTime,
+				  ptCentral->process_time.taskTime1,
+				  ptCentral->process_time.taskTime2,
+				  ptCentral->process_time.PressureTime,
+				  UsartDevice.bufferedTxNum);
 
 	  vTaskDelayUntil(&xLastWakeTime,sendTaskPeriod);
   }
@@ -197,19 +210,20 @@ void EthPacketTaskFunc(void const * argument)
 	TickType_t EthPacketTaskPeriod=pdMS_TO_TICKS(10);   //10ms Period for command handle
 	int32_t lRet;
     lRet = Protocol_SendFirstPacket(&tAppData);
-
+    int32_t c1,c2;
   /* Infinite loop */
     /****100 us****/
   for(;;)
   {
 	  while(tAppData.fRunning && lRet == CIFX_NO_ERROR){
-
+		  c1 = TIC();
 		/** check and process incoming packets */
 		  lRet = EthercatPacketEventHandler();
 
 		/* process Terminal command, if any.*/
 		  Usart_TerminalHandler();
-
+		  c2=TIC();
+		  ptCentral->process_time.taskTime2 = c2-c1;
 		  vTaskDelayUntil(&xLastWakeTime,EthPacketTaskPeriod);
 		}
 		/** remove calling of App_IODataHandler, because we don't have valid IO Data any more */
@@ -244,8 +258,9 @@ void EthCyclicTaskFunc(void const * argument)
 	  /*apply control outcome, 50us*/
 	  ptCentral->applyControl(ptCentral);
 
-	  c4 = TIC();
-	  printf("ControlTime is :%ld %ld %ld\r\n",c2-c1,c3-c2,c4-c3);
+	  c4=TIC();
+	  ptCentral->process_time.taskTime1 = c4-c1;
+	//  printf("ControlTime is :%ld %ld %ld\r\n",c2-c1,c3-c2,c4-c3);
 	  vTaskDelayUntil(&xLastWakeTime,EthCyclicTaskPeriod);
   }
   /* USER CODE END EthCyclicTaskFunc */

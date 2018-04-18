@@ -28,8 +28,8 @@
 #define AD_CS_LOW()  (AD_CS_GPIO_Port->BSRR=(uint32_t)AD_CS_Pin<<16U)
 #define AD_CS_HIGH() (AD_CS_GPIO_Port->BSRR=AD_CS_Pin)
 
-static uint32_t ulDummyWord=0xFFFFFFFF;
-
+static uint16_t ulDummyWord[16]={0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF};
+int32_t ADtime=0;
 
 void AD_BUSYCallback(AD_DEVICE *ptADDev)
 {
@@ -39,12 +39,14 @@ void AD_BUSYCallback(AD_DEVICE *ptADDev)
 
 void AD_SPICallback(AD_DEVICE *ptADDev)
 {
+
 	AD_CS_HIGH();
 	for(int i=0;i<ptADDev->uChannelNum;i++)
 		{
-		ptADDev->fChannel[i]=(int16_t)ptADDev->uChannel[i]*ptADDev->fRange/65536.0f+ptADDev->fMid;
+		ptADDev->fChannel[i]=(int16_t)ptADDev->uChannel[i]/65536.0f*ptADDev->fRange;
 		}
 	ptADDev->ucDataFlag = 1;
+	ADtime=TOC();
 }
 
 static void AD_Reset(AD_DEVICE *ptADDev)
@@ -60,7 +62,7 @@ static void AD_Reset(AD_DEVICE *ptADDev)
 static void AD_getVoltage(AD_DEVICE *ptADDev)
 {
 	AD_CONV_LOW();
-	for(int i=0;i<2;i++);
+	for(int i=0;i<10;i++);
 	AD_CONV_HIGH();
 	ptADDev->ucDataFlag = 0;
 }
@@ -72,7 +74,6 @@ void Init_AD(AD_DEVICE * ptADDev,uint16_t numChannel,float vMin,float vMax,SPI_H
 	ptADDev->fMinVoltage = vMin;
 	ptADDev->fMaxVoltage = vMax;
 	ptADDev->fRange = vMax-vMin;
-	ptADDev->fMid = (vMax+vMin)/2.0;
 	ptADDev->uChannelNum = numChannel;
 
 	ptADDev->AD_spi=AD_spi;
