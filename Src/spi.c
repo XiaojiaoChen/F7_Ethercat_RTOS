@@ -65,6 +65,8 @@ SPI_HandleTypeDef hspi5;
 SPI_HandleTypeDef hspi6;
 DMA_HandleTypeDef hdma_spi3_rx;
 DMA_HandleTypeDef hdma_spi3_tx;
+DMA_HandleTypeDef hdma_spi6_rx;
+DMA_HandleTypeDef hdma_spi6_tx;
 
 /* SPI1 init function */
 void MX_SPI1_Init(void)
@@ -255,23 +257,20 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
     PC3     ------> SPI2_MOSI
     PD3     ------> SPI2_SCK 
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3;
+    GPIO_InitStruct.Pin = IMU_MISO_Pin|IMU_MOSI_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF5_SPI2;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_3;
+    GPIO_InitStruct.Pin = IMU_SCK_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF5_SPI2;
-    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+    HAL_GPIO_Init(IMU_SCK_GPIO_Port, &GPIO_InitStruct);
 
-    /* SPI2 interrupt Init */
-    HAL_NVIC_SetPriority(SPI2_IRQn, 7, 0);
-    HAL_NVIC_EnableIRQ(SPI2_IRQn);
   /* USER CODE BEGIN SPI2_MspInit 1 */
 
   /* USER CODE END SPI2_MspInit 1 */
@@ -333,9 +332,6 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
 
     __HAL_LINKDMA(spiHandle,hdmatx,hdma_spi3_tx);
 
-    /* SPI3 interrupt Init */
-    HAL_NVIC_SetPriority(SPI3_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(SPI3_IRQn);
   /* USER CODE BEGIN SPI3_MspInit 1 */
 
   /* USER CODE END SPI3_MspInit 1 */
@@ -360,9 +356,6 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
     GPIO_InitStruct.Alternate = GPIO_AF5_SPI4;
     HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-    /* SPI4 interrupt Init */
-    HAL_NVIC_SetPriority(SPI4_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(SPI4_IRQn);
   /* USER CODE BEGIN SPI4_MspInit 1 */
 
   /* USER CODE END SPI4_MspInit 1 */
@@ -403,16 +396,53 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
     __HAL_RCC_SPI6_CLK_ENABLE();
   
     /**SPI6 GPIO Configuration    
-    PB3     ------> SPI6_SCK
-    PB4     ------> SPI6_MISO
-    PB5     ------> SPI6_MOSI 
+    PG12     ------> SPI6_MISO
+    PG13     ------> SPI6_SCK
+    PG14     ------> SPI6_MOSI 
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5;
+    GPIO_InitStruct.Pin = PRESSURE_MISO_Pin|PRESSURE_SCK_Pin|PRESSURE_MOSI_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF8_SPI6;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    GPIO_InitStruct.Alternate = GPIO_AF5_SPI6;
+    HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+
+    /* SPI6 DMA Init */
+    /* SPI6_RX Init */
+    hdma_spi6_rx.Instance = DMA2_Stream6;
+    hdma_spi6_rx.Init.Channel = DMA_CHANNEL_1;
+    hdma_spi6_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_spi6_rx.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_spi6_rx.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_spi6_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+    hdma_spi6_rx.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+    hdma_spi6_rx.Init.Mode = DMA_NORMAL;
+    hdma_spi6_rx.Init.Priority = DMA_PRIORITY_LOW;
+    hdma_spi6_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    if (HAL_DMA_Init(&hdma_spi6_rx) != HAL_OK)
+    {
+      _Error_Handler(__FILE__, __LINE__);
+    }
+
+    __HAL_LINKDMA(spiHandle,hdmarx,hdma_spi6_rx);
+
+    /* SPI6_TX Init */
+    hdma_spi6_tx.Instance = DMA2_Stream5;
+    hdma_spi6_tx.Init.Channel = DMA_CHANNEL_1;
+    hdma_spi6_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    hdma_spi6_tx.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_spi6_tx.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_spi6_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+    hdma_spi6_tx.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+    hdma_spi6_tx.Init.Mode = DMA_NORMAL;
+    hdma_spi6_tx.Init.Priority = DMA_PRIORITY_LOW;
+    hdma_spi6_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    if (HAL_DMA_Init(&hdma_spi6_tx) != HAL_OK)
+    {
+      _Error_Handler(__FILE__, __LINE__);
+    }
+
+    __HAL_LINKDMA(spiHandle,hdmatx,hdma_spi6_tx);
 
   /* USER CODE BEGIN SPI6_MspInit 1 */
 
@@ -457,12 +487,10 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
     PC3     ------> SPI2_MOSI
     PD3     ------> SPI2_SCK 
     */
-    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_2|GPIO_PIN_3);
+    HAL_GPIO_DeInit(GPIOC, IMU_MISO_Pin|IMU_MOSI_Pin);
 
-    HAL_GPIO_DeInit(GPIOD, GPIO_PIN_3);
+    HAL_GPIO_DeInit(IMU_SCK_GPIO_Port, IMU_SCK_Pin);
 
-    /* SPI2 interrupt Deinit */
-    HAL_NVIC_DisableIRQ(SPI2_IRQn);
   /* USER CODE BEGIN SPI2_MspDeInit 1 */
 
   /* USER CODE END SPI2_MspDeInit 1 */
@@ -485,9 +513,6 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
     /* SPI3 DMA DeInit */
     HAL_DMA_DeInit(spiHandle->hdmarx);
     HAL_DMA_DeInit(spiHandle->hdmatx);
-
-    /* SPI3 interrupt Deinit */
-    HAL_NVIC_DisableIRQ(SPI3_IRQn);
   /* USER CODE BEGIN SPI3_MspDeInit 1 */
 
   /* USER CODE END SPI3_MspDeInit 1 */
@@ -507,8 +532,6 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
     */
     HAL_GPIO_DeInit(GPIOE, ANGLE_SCK_Pin|ANGLE_MISO_Pin|ANGLE_MOSI_Pin);
 
-    /* SPI4 interrupt Deinit */
-    HAL_NVIC_DisableIRQ(SPI4_IRQn);
   /* USER CODE BEGIN SPI4_MspDeInit 1 */
 
   /* USER CODE END SPI4_MspDeInit 1 */
@@ -543,12 +566,15 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
     __HAL_RCC_SPI6_CLK_DISABLE();
   
     /**SPI6 GPIO Configuration    
-    PB3     ------> SPI6_SCK
-    PB4     ------> SPI6_MISO
-    PB5     ------> SPI6_MOSI 
+    PG12     ------> SPI6_MISO
+    PG13     ------> SPI6_SCK
+    PG14     ------> SPI6_MOSI 
     */
-    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5);
+    HAL_GPIO_DeInit(GPIOG, PRESSURE_MISO_Pin|PRESSURE_SCK_Pin|PRESSURE_MOSI_Pin);
 
+    /* SPI6 DMA DeInit */
+    HAL_DMA_DeInit(spiHandle->hdmarx);
+    HAL_DMA_DeInit(spiHandle->hdmatx);
   /* USER CODE BEGIN SPI6_MspDeInit 1 */
 
   /* USER CODE END SPI6_MspDeInit 1 */

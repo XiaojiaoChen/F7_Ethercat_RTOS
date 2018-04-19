@@ -13,72 +13,58 @@
 #include "Controller.h"
 
 CENTRAL gCentral;
+CENTRAL *ptCentral = &gCentral;
 
 /*update sensor data, to be sent in the EthercatCyclicIODataHandler()*/
 static void central_updateData(struct CENTRAL_STRUCT *ptCentral) {
 	int32_t lc1, lc2,lc3,lc4;
-	int32_t timeoutAD = 50;//actually, all 8 channels take only 25us to get DMA data back
+	int32_t timeoutSensor = 250;
 	static int32_t CyclicDelayTime = 500;
 
 	/*This is to ensure the timer to have enough ticks before its overflow and reset during this process*/
 	if (TIC() > 0x7FFF7FFF)
 		TTTimer.Instance->CNT = 0;
-
-	/*record the start Tick*/
 	lc1 = TIC();
 
-	/*get all Analog, none blocking, should check dataFlag for data receiving done, before using it*/
+	//get pressures non blocking through DMA. This would take 200 us for 8 channels
+	ptCentral->ptPressureHub->getPressureAll_DMA(ptCentral->ptPressureHub);
+
+	/*get Analog none blocking, througn DMA. This would take 40us for 8 channels*/
 	ptCentral->ADDevice.getVoltage(&ptCentral->ADDevice);
 
-	/*get Angles, blocking*/
+	/*get Angles,blocking. This would take 100us for 4 channels*/
 	ptCentral->ptAngleHub->getAngleAll(ptCentral->ptAngleHub);
 
-	/*get IMU blocking*/
+	/*get IMU, blocking. This would take 100us for 4 channels*/
 
-	lc2 = TIC();
-	ptCentral->process_time.ADTime = lc2-lc1;
 
-	/*wait for Analog read accomplished, or Tick timeout*/
-	while (ptCentral->ADDevice.ucDataFlag == 0) {
-		lc2 = TIC();
-		if ((lc2 - lc1) > timeoutAD){
-			AD_CS_GPIO_Port->BSRR=AD_CS_Pin;
-			break;
-		}
-	}
-
-	/*get all pressure, since Analog pressure sensor just simply read AD results*/
-	ptCentral->ptPressureHub->getPressureAll(ptCentral->ptPressureHub);
+	/*wait for a fixed timeout*/
+	while ((TIC() - lc1) < timeoutSensor);
 
 	/*store data to Ethercat Buffer*/
-	for (int i = 0; i < ptCentral->ptAngleHub->Num; i++) {
+	for (int i = 0; i < JOINT_NUM; i++) {
 		ptCentral->ptSensorData->angle[i] = ptCentral->ptAngleHub->angles[i];
 		ptCentral->ptSensorData->velocity[i] = ptCentral->ptAngleHub->velocity[i];
 		ptCentral->ptSensorData->acceleration[i] = ptCentral->ptAngleHub->acceleration[i];
 		ptCentral->ptSensorData->pressure[i][0] = ptCentral->ptPressureHub->Pressure[i][0];
 		ptCentral->ptSensorData->pressure[i][1] = ptCentral->ptPressureHub->Pressure[i][1];
 	}
-	//add Slave timestamp
-
-	ptCentral->ptSensorData->timeTick = TIC();
-
 
 	lc2 = TIC();
-	ptCentral->process_time.PressureTime = lc2-lc1;
+	ptCentral->process_time.SensorTime = lc2-lc1;
 
-//	/*wait for predefined Update period. This is to ensure EthercatCyclicIODataHandler to have a fixed starting time*/
-//	while (1) {
-//		local_c2 = TIC();
-//		if ((local_c2 - local_c1) > periodUpdate)
-//			break;
-//	}
+	//add Slave timestamp
+	ptCentral->ptSensorData->timeTick = TIC();
 
 	//Ethercat Exchange Data
 	  if(CyclicDelayTime>0){
 		  CyclicDelayTime--;
 	  }else{
+		  lc2 = TIC();
 		  EthercatCyclicIODataHandler();
+		  ptCentral->process_time.EthercatIOTime = TIC()-lc2;
 	  }
+
 
 }
 

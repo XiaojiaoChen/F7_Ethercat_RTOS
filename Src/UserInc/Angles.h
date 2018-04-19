@@ -14,7 +14,7 @@
 
 
 #define __AS5048_GET_FLAG(__DATA__, __FLAG__)  (((__DATA__) & (__FLAG__)) == (__FLAG__))
-#define __AS5311_RawAB(__Handle_) (int16_t)((__Handle_)->htim->Instance->CNT)
+#define __AS5311_RawAB(__Handle_) (uint16_t)((__Handle_)->htim->Instance->CNT)
 
 
 typedef struct ANGLE_DEVICE_STRUCT{
@@ -66,12 +66,15 @@ typedef struct AS5311_DEVICE_STRUCT{
 
     float 		AngleABZ;
     int16_t 	Index;
-    int16_t		AB;
-    int16_t		ABLast;
+    int32_t		AB;
+    int32_t		ABLast;
     float 		angleCoAB;
     float 		ABFraction;
     int16_t 	ABIndex;
     float 		ABOffsetFrac;
+
+    int16_t dir;
+    int16_t loop;
 
     KALMAN_FILTER kalman_filter;
     float	kalmanQ[3];
@@ -103,6 +106,6 @@ typedef struct ANGLE_HUB_STRUCT{
 ANGLE_HUB *ANGLEHUB(struct CENTRAL_STRUCT *);
 MINI4096_DEVICE *MINI4096(SPI_HandleTypeDef *,GPIO_TypeDef *csPort,uint16_t csPin,uint16_t);
 AS5048_DEVICE *AS5048(SPI_HandleTypeDef *,GPIO_TypeDef *csPort,uint16_t csPin,uint16_t);
-AS5311_DEVICE *AS5311(SPI_HandleTypeDef *,GPIO_TypeDef *,uint16_t,TIM_HandleTypeDef *,GPIO_TypeDef *,uint16_t,uint16_t);
+AS5311_DEVICE *AS5311(uint16_t jointNum);
 void AS5311_EXTICallback(AS5311_DEVICE *ptAS5311Dev); //update Z and last AB
 #endif

@@ -47,7 +47,6 @@
   ******************************************************************************
   */
 /* Includes ------------------------------------------------------------------*/
-#include <Central.h>
 #include "main.h"
 #include "stm32f7xx_hal.h"
 #include "cmsis_os.h"
@@ -69,6 +68,7 @@
 #include "Angles.h"
 #include "stdio.h"
 #include "myUsartFunctions.h"
+#include "pressureSensor.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -139,10 +139,10 @@ int main(void)
   MX_SPI4_Init();
   MX_SPI5_Init();
   MX_TIM4_Init();
-  MX_TIM8_Init();
+  MX_TIM3_Init();
+  MX_SPI6_Init();
   MX_TIM5_Init();
   MX_TIM1_Init();
-  MX_TIM3_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start(&TTTimer);
@@ -281,23 +281,40 @@ void delay_ns(uint32_t t)  ////20MHz 50ns
 /*-----------------------Call back functions----------------------*/
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 {
-	if (hspi==gCentral.ADDevice.AD_spi)
+	if (hspi==&hspi_AD)
 	{
-		AD_SPICallback(&(gCentral.ADDevice));
+		AD_SPICallback(&(ptCentral->ADDevice));
 
+	}
+	else if(hspi == &hspi_PRESSURE)
+	{
+		pressure_SPICallback(ptCentral->ptPressureHub);
 	}
 }
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)         //read analog SPI2
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	if (GPIO_Pin == AD_BUSY_Pin)
 		{
-		AD_BUSYCallback(&(gCentral.ADDevice));
+		AD_BUSYCallback(&(ptCentral->ADDevice));
 		}
-	else if(GPIO_Pin == ((AS5311_DEVICE *)(gCentral.ptAngleHub->angleDevices[0]))->EXTI_Pin)
+	else if(GPIO_Pin == ANGLE_0_Z_Pin)
 	{
-		AS5311_EXTICallback((AS5311_DEVICE *)(gCentral.ptAngleHub->angleDevices[0]));
+		AS5311_EXTICallback((AS5311_DEVICE *)(ptCentral->ptAngleHub->angleDevices[0]));
 	}
+	else if(GPIO_Pin == ANGLE_1_Z_Pin)
+	{
+		AS5311_EXTICallback((AS5311_DEVICE *)(ptCentral->ptAngleHub->angleDevices[1]));
+	}
+	else if(GPIO_Pin == ANGLE_2_Z_Pin)
+	{
+		AS5311_EXTICallback((AS5311_DEVICE *)(ptCentral->ptAngleHub->angleDevices[2]));
+	}
+	else if(GPIO_Pin == ANGLE_3_Z_Pin)
+	{
+		AS5311_EXTICallback((AS5311_DEVICE *)(ptCentral->ptAngleHub->angleDevices[3]));
+	}
+
 }
 /* USER CODE END 4 */
 

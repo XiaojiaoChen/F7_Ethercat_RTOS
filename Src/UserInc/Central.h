@@ -30,11 +30,7 @@ enum CONTROLLER_TYPE{
 
 
 struct PROCESS_TIME{
-	int32_t ADTime;
-	int32_t AngleTime;
-	int32_t DATime;
-	int32_t PressureTime;
-	int32_t RugulatorTime;
+	int32_t SensorTime;
 	int32_t EthercatIOTime;
 	int32_t EthercatPacketTime;
 	int32_t ControlTime;
@@ -71,5 +67,5 @@ typedef struct CENTRAL_STRUCT
 /**********Golbal Data*****************/
 void Init_Central(CENTRAL *ptCentral,APP_DATA_T *EthercatAppData);
 extern CENTRAL gCentral;
-
+extern CENTRAL *ptCentral;
 #endif /* USER_INC_MYMIDDLELAYER_H_ */

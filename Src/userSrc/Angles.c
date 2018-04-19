@@ -26,7 +26,12 @@ static uint16_t ClearByte=0x4001;
  * angleHub.getAngleAll(ptAngleHub); //get all the angles, stored in angleHub.angles;
  */
 
+GPIO_TypeDef *ANGLE_CS_GPIO_Ports[JOINT_NUM] = {ANGLE_0_CS_GPIO_Port,ANGLE_1_CS_GPIO_Port,ANGLE_2_CS_GPIO_Port,ANGLE_3_CS_GPIO_Port};
+uint16_t	ANGLE_CS_Pins[JOINT_NUM] = {ANGLE_0_CS_Pin,ANGLE_1_CS_Pin,ANGLE_2_CS_Pin,ANGLE_3_CS_Pin};
 
+TIM_HandleTypeDef *ANGLE_TIMs[JOINT_NUM] = {&htim_ANGLE_0,&htim_ANGLE_1,&htim_ANGLE_2,&htim_ANGLE_3};
+GPIO_TypeDef *ANGLE_Z_GPIO_Ports[JOINT_NUM] = {ANGLE_0_Z_GPIO_Port,ANGLE_1_Z_GPIO_Port,ANGLE_2_Z_GPIO_Port,ANGLE_3_Z_GPIO_Port};
+uint16_t	ANGLE_Z_Pins[JOINT_NUM] = {ANGLE_0_Z_Pin,ANGLE_1_Z_Pin,ANGLE_2_Z_Pin,ANGLE_3_Z_Pin};
 
 
 /******************************AS5048 Device**********************************/
@@ -267,11 +272,25 @@ static void AS5311_readRawSPI(AS5311_DEVICE *ptAS5311Dev)
 /*This callback function is attached to Index interrupt, would update Z index and record instant AB counts*/
 void AS5311_EXTICallback(AS5311_DEVICE *ptAS5311Dev)
 {
-	//update Z index according to direction
-	ptAS5311Dev->Index+=(__HAL_TIM_IS_TIM_COUNTING_DOWN(ptAS5311Dev->htim))?-1:1;
+	ptAS5311Dev->dir = (__HAL_TIM_IS_TIM_COUNTING_DOWN(ptAS5311Dev->htim))?-1:1;
+	//If negative direction, sync AB first, then update index
+	if(-1 == ptAS5311Dev->dir){
+		ptAS5311Dev->htim->Instance->CNT = ptAS5311Dev->Index*1024;
+		ptAS5311Dev->ABLast = ptAS5311Dev->Index*1024;
+		if(!(ptAS5311Dev->Index%64)){
+			ptAS5311Dev->loop--;
+		}
+		ptAS5311Dev->Index--;
+	}
+	else{//If positive direction, update index first, then sync AB
+		ptAS5311Dev->Index++;
+		if(!(ptAS5311Dev->Index%64)){
+			ptAS5311Dev->loop++;
+		}
+		ptAS5311Dev->htim->Instance->CNT = ptAS5311Dev->Index*1024;
+		ptAS5311Dev->ABLast = (ptAS5311Dev->Index*1024);
+	}
 
-	//record the instant AB read when crossing every Z, to reduce accumulated error
-	ptAS5311Dev->ABLast = __AS5311_RawAB(ptAS5311Dev);
 }
 
 /*This function gets the final angle,velocity and acceleration from raw sensor data*/
@@ -281,13 +300,14 @@ static void AS5311_ValidateData(AS5311_DEVICE *ptAS5311Dev)
 	ptAS5311Dev->SPIFraction = ptAS5311Dev->rawSPI/1024.0f;
 
 	//calculate AB fraction
-	ptAS5311Dev->ABFraction =  (__AS5311_RawAB(ptAS5311Dev)-ptAS5311Dev->ABLast)/1024.0f;
+	ptAS5311Dev->AB = (int32_t)(ptAS5311Dev->loop*65536) +(int32_t)__AS5311_RawAB(ptAS5311Dev);
+	ptAS5311Dev->ABFraction =  (ptAS5311Dev->AB-ptAS5311Dev->ABLast)/1024.0f;
 
 	//SPI index is the same as main Index, because SPI reading is always from left to right on the axis
 	ptAS5311Dev->SPIIndex = ptAS5311Dev->Index;
 
 	//AB index would change in negative area, because AB counting has sign.
-	ptAS5311Dev->ABIndex = (ptAS5311Dev->Index>=0)?(ptAS5311Dev->Index):(ptAS5311Dev->Index+1);
+	ptAS5311Dev->ABIndex = (ptAS5311Dev->ABFraction>=0)?(ptAS5311Dev->Index):(ptAS5311Dev->Index+1);
 
 	//final SPI counting plus offset
 	ptAS5311Dev->AngleSPI = (ptAS5311Dev->SPIIndex+ptAS5311Dev->SPIFraction-ptAS5311Dev->SPIOffsetFrac)*2*3.14159265f/64.0f;
@@ -339,7 +359,7 @@ static void AS5311_setZero(ANGLE_DEVICE *ptAngleDev)
 	__HAL_TIM_SET_COUNTER(ptAS5311Dev->htim,(uint16_t)(ptAS5311Dev->ABFraction*1024));
 }
 
-AS5311_DEVICE * AS5311(SPI_HandleTypeDef *hspi,GPIO_TypeDef *csPort,uint16_t csPin,TIM_HandleTypeDef *htim,GPIO_TypeDef *extiPort,uint16_t extiPin,uint16_t jointNum)
+AS5311_DEVICE * AS5311(uint16_t jointNum)
 {
 	KALMAN_TYPE SimTypeKalman=Kalman_Sim;
 
@@ -353,24 +373,25 @@ AS5311_DEVICE * AS5311(SPI_HandleTypeDef *hspi,GPIO_TypeDef *csPort,uint16_t csP
 	ptAS5311Dev->base.getAngle = AS5311_getAngle;
 	ptAS5311Dev->base.setZero = AS5311_setZero;
 
+	//actual joint num
+	ptAS5311Dev->base.jointNum = jointNum;
 
 	ptAS5311Dev->angleCoSPI = 2*3.14159265f/64.0f/1024.0f;
 	ptAS5311Dev->angleCoAB = 2*3.14159265f/64.0f/1024.0f;
 
 	//SPI configuration
-	ptAS5311Dev->CS_Pin = csPin;
-	ptAS5311Dev->CS_Port = csPort;
-	ptAS5311Dev->hspi = hspi;
+	ptAS5311Dev->CS_Pin = ANGLE_CS_Pins[jointNum];
+	ptAS5311Dev->CS_Port = ANGLE_CS_GPIO_Ports[jointNum];
+	ptAS5311Dev->hspi = &hspi_ANGLE;
 
 	//AB Timer configuration
-	ptAS5311Dev->htim = htim;
+	ptAS5311Dev->htim = ANGLE_TIMs[jointNum];
 
 	//Z-index EXTI configuration
-	ptAS5311Dev->EXTI_Port = extiPort;
-	ptAS5311Dev->EXTI_Pin = extiPin;
+	ptAS5311Dev->EXTI_Port = ANGLE_Z_GPIO_Ports[jointNum];
+	ptAS5311Dev->EXTI_Pin = ANGLE_Z_Pins[jointNum];
 
-	//actual joint num
-	ptAS5311Dev->base.jointNum = jointNum;
+
 
 	//kalman filter configuration
 	ptAS5311Dev->kalmanQ[0] = 1e-8;
@@ -381,11 +402,11 @@ AS5311_DEVICE * AS5311(SPI_HandleTypeDef *hspi,GPIO_TypeDef *csPort,uint16_t csP
 
 	//start a dummy transport
 	AS5311_CS_LOW(ptAS5311Dev);
-	HAL_SPI_Transmit(hspi,(uint8_t *)(&DummyWord),1,1);
+	HAL_SPI_Transmit(ptAS5311Dev->hspi,(uint8_t *)(&DummyWord),1,1);
 	AS5311_CS_HIGH(ptAS5311Dev);
 
 	//start AB counting
-	HAL_TIM_Encoder_Start(htim,TIM_CHANNEL_ALL);
+	HAL_TIM_Encoder_Start(ptAS5311Dev->htim,TIM_CHANNEL_ALL);
 
 	//zero postition
 	ptAS5311Dev->base.setZero((ANGLE_DEVICE *)ptAS5311Dev);
@@ -440,10 +461,26 @@ ANGLE_HUB *ANGLEHUB(CENTRAL *ptCentral)
 
 
 	/*Add one encoder, attached to SPI, TIME, EXTI, JointNum 0*/
-	AS5311_DEVICE *ptAS5311Dev1 = AS5311(&hspi_ANGLE,ANGLE_CS_GPIO_Port,ANGLE_CS_Pin,&htim_ANGLE,ENCODER_INDEX_GPIO_Port,ENCODER_INDEX_Pin,0);
-	ptAngleHub->attach(ptAngleHub,(ANGLE_DEVICE *)ptAS5311Dev1);
+	AS5311_DEVICE *ptAS5311Dev = AS5311(0);
+	ptAngleHub->attach(ptAngleHub,(ANGLE_DEVICE *)ptAS5311Dev);
 
+	ptAS5311Dev = AS5311(1);
+	ptAngleHub->attach(ptAngleHub,(ANGLE_DEVICE *)ptAS5311Dev);
 
+	ptAS5311Dev = AS5311(2);
+		ptAngleHub->attach(ptAngleHub,(ANGLE_DEVICE *)ptAS5311Dev);
+
+		ptAS5311Dev = AS5311(3);
+			ptAngleHub->attach(ptAngleHub,(ANGLE_DEVICE *)ptAS5311Dev);
+
+//	ptAS5311Dev = AS5311(1);
+//	ptAngleHub->attach(ptAngleHub,(ANGLE_DEVICE *)ptAS5311Dev);
+//
+//	ptAS5311Dev = AS5311(2);
+//	ptAngleHub->attach(ptAngleHub,(ANGLE_DEVICE *)ptAS5311Dev);
+//
+//	ptAS5311Dev = AS5311(3);
+//	ptAngleHub->attach(ptAngleHub,(ANGLE_DEVICE *)ptAS5311Dev);
 
 //	/*Add one encoder, attached to SPI, TIME, EXTI, JointNum 1*/
 //	ptAS5311Dev1 = AS5311(&hspi_ANGLE,ANGLE_CS_GPIO_Port,ANGLE_CS_Pin,&htim_ANGLE,ENCODER_INDEX_GPIO_Port,ENCODER_INDEX_Pin,0);

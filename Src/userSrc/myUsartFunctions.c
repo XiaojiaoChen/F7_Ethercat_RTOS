@@ -13,6 +13,7 @@
 #include "string.h"
 #include <stdarg.h>
 #include <stdio.h>
+#include "main.h"
 UART_DEVICE UsartDevice;
 
 
@@ -135,9 +136,10 @@ int _write(int file, char *pSrc, int len)
 	UsartDevice.bufferedTxNum++;
 
 	/*Try to send just buffered string if this is the only one*/
-	if(UsartDevice.bufferedTxNum == 1)
+	if(UsartDevice.bufferedTxNum == 1){
 		HAL_UART_Transmit_DMA(UsartDevice.huart,pDes,UsartDevice.countTxBuf[UsartDevice.producerTxBufNum]);
-
+		UsartDevice.TxStart = TIC();
+	}
 	/*move producerTxBufNum forward*/
 	UsartDevice.producerTxBufNum++;
 	UsartDevice.producerTxBufNum%=UART_TX_BUF_NUM;
@@ -156,6 +158,10 @@ int _write(int file, char *pSrc, int len)
 /*this function would overwrite HAL's weak HAL_UART_TxCpltCallback*/
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
+	 /*update information*/
+	 UsartDevice.TxEnd = TIC();
+	 UsartDevice.lastTxTime = UsartDevice.TxEnd - UsartDevice.TxStart;
+	 UsartDevice.lastTxCount = UsartDevice.countTxBuf[UsartDevice.consumerTxBufNum];
 
 	/*One consumption done. move consumer forward*/
 	UsartDevice.consumerTxBufNum++;
@@ -164,8 +170,11 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 	/*reduce one bufferedTxNum*/
 	 UsartDevice.bufferedTxNum--;
 
+
+
 	/*If it is still positive, go on consume next*/
 	if(UsartDevice.bufferedTxNum>0){
+		UsartDevice.TxStart = TIC();
 		uint8_t *px = &UsartDevice.TxBuf[UsartDevice.consumerTxBufNum][0];
 		HAL_UART_Transmit_DMA(UsartDevice.huart,px,UsartDevice.countTxBuf[UsartDevice.consumerTxBufNum]);
 	}

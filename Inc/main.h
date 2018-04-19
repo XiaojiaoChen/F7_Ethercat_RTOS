@@ -65,8 +65,8 @@
 #define ANGLE_SCK_GPIO_Port GPIOE
 #define DA_CS_Pin GPIO_PIN_3
 #define DA_CS_GPIO_Port GPIOE
-#define ANGLE_CS_Pin GPIO_PIN_4
-#define ANGLE_CS_GPIO_Port GPIOE
+#define ANGLE_0_CS_Pin GPIO_PIN_4
+#define ANGLE_0_CS_GPIO_Port GPIOE
 #define ANGLE_MISO_Pin GPIO_PIN_5
 #define ANGLE_MISO_GPIO_Port GPIOE
 #define ANGLE_MOSI_Pin GPIO_PIN_6
@@ -80,6 +80,14 @@
 #define DA_MISO_GPIO_Port GPIOF
 #define DA_MOSI_Pin GPIO_PIN_9
 #define DA_MOSI_GPIO_Port GPIOF
+#define IMU_MISO_Pin GPIO_PIN_2
+#define IMU_MISO_GPIO_Port GPIOC
+#define IMU_MOSI_Pin GPIO_PIN_3
+#define IMU_MOSI_GPIO_Port GPIOC
+#define ANGLE_3_A_Pin GPIO_PIN_0
+#define ANGLE_3_A_GPIO_Port GPIOA
+#define ANGLE_3_B_Pin GPIO_PIN_1
+#define ANGLE_3_B_GPIO_Port GPIOA
 #define SPM_SCK_Pin GPIO_PIN_5
 #define SPM_SCK_GPIO_Port GPIOA
 #define SPM_MISO_Pin GPIO_PIN_6
@@ -88,34 +96,91 @@
 #define SPM_MOSI_GPIO_Port GPIOA
 #define LED1_Pin GPIO_PIN_0
 #define LED1_GPIO_Port GPIOB
-#define ENCODER_INDEX_Pin GPIO_PIN_14
-#define ENCODER_INDEX_GPIO_Port GPIOF
-#define ENCODER_INDEX_EXTI_IRQn EXTI15_10_IRQn
+#define ANGLE_3_Z_Pin GPIO_PIN_11
+#define ANGLE_3_Z_GPIO_Port GPIOF
+#define ANGLE_3_Z_EXTI_IRQn EXTI15_10_IRQn
+#define ANGLE_2_Z_Pin GPIO_PIN_12
+#define ANGLE_2_Z_GPIO_Port GPIOF
+#define ANGLE_2_Z_EXTI_IRQn EXTI15_10_IRQn
+#define ANGLE_0_Z_Pin GPIO_PIN_14
+#define ANGLE_0_Z_GPIO_Port GPIOF
+#define ANGLE_0_Z_EXTI_IRQn EXTI15_10_IRQn
+#define ANGLE_1_Z_Pin GPIO_PIN_15
+#define ANGLE_1_Z_GPIO_Port GPIOF
+#define ANGLE_1_Z_EXTI_IRQn EXTI15_10_IRQn
+#define ANGLE_0_A_Pin GPIO_PIN_9
+#define ANGLE_0_A_GPIO_Port GPIOE
+#define ANGLE_0_B_Pin GPIO_PIN_11
+#define ANGLE_0_B_GPIO_Port GPIOE
 #define LED3_Pin GPIO_PIN_14
 #define LED3_GPIO_Port GPIOB
+#define ANGLE_2_A_Pin GPIO_PIN_12
+#define ANGLE_2_A_GPIO_Port GPIOD
+#define ANGLE_2_B_Pin GPIO_PIN_13
+#define ANGLE_2_B_GPIO_Port GPIOD
 #define SPM_CS_Pin GPIO_PIN_14
 #define SPM_CS_GPIO_Port GPIOD
 #define AD_CONV_Pin GPIO_PIN_2
 #define AD_CONV_GPIO_Port GPIOG
 #define AD_RESET_Pin GPIO_PIN_3
 #define AD_RESET_GPIO_Port GPIOG
+#define PRESSURE_31_CS_Pin GPIO_PIN_4
+#define PRESSURE_31_CS_GPIO_Port GPIOG
+#define PRESSURE_30_CS_Pin GPIO_PIN_5
+#define PRESSURE_30_CS_GPIO_Port GPIOG
+#define PRESSURE_21_CS_Pin GPIO_PIN_6
+#define PRESSURE_21_CS_GPIO_Port GPIOG
+#define PRESSURE_20_CS_Pin GPIO_PIN_7
+#define PRESSURE_20_CS_GPIO_Port GPIOG
+#define PRESSURE_11_CS_Pin GPIO_PIN_8
+#define PRESSURE_11_CS_GPIO_Port GPIOG
+#define ANGLE_1_A_Pin GPIO_PIN_6
+#define ANGLE_1_A_GPIO_Port GPIOC
+#define ANGLE_1_B_Pin GPIO_PIN_7
+#define ANGLE_1_B_GPIO_Port GPIOC
 #define AD_CS_Pin GPIO_PIN_9
 #define AD_CS_GPIO_Port GPIOC
-#define SPI6_CS_Pin GPIO_PIN_10
-#define SPI6_CS_GPIO_Port GPIOA
+#define PRESSURE_CS_Pin GPIO_PIN_10
+#define PRESSURE_CS_GPIO_Port GPIOA
 #define AD_SCK_Pin GPIO_PIN_10
 #define AD_SCK_GPIO_Port GPIOC
 #define AD_MISO_Pin GPIO_PIN_11
 #define AD_MISO_GPIO_Port GPIOC
 #define AD_MOSI_Pin GPIO_PIN_12
 #define AD_MOSI_GPIO_Port GPIOC
+#define IMU_3_CS_Pin GPIO_PIN_0
+#define IMU_3_CS_GPIO_Port GPIOD
+#define IMU_2_CS_Pin GPIO_PIN_1
+#define IMU_2_CS_GPIO_Port GPIOD
 #define AD_BUSY_Pin GPIO_PIN_2
 #define AD_BUSY_GPIO_Port GPIOD
 #define AD_BUSY_EXTI_IRQn EXTI2_IRQn
-#define SPI2_CS_Pin GPIO_PIN_4
-#define SPI2_CS_GPIO_Port GPIOD
+#define IMU_SCK_Pin GPIO_PIN_3
+#define IMU_SCK_GPIO_Port GPIOD
+#define IMU_0_CS_Pin GPIO_PIN_4
+#define IMU_0_CS_GPIO_Port GPIOD
+#define IMU_1_CS_Pin GPIO_PIN_5
+#define IMU_1_CS_GPIO_Port GPIOD
+#define PRESSURE_01_CS_Pin GPIO_PIN_10
+#define PRESSURE_01_CS_GPIO_Port GPIOG
+#define PRESSURE_00_CS_Pin GPIO_PIN_11
+#define PRESSURE_00_CS_GPIO_Port GPIOG
+#define PRESSURE_MISO_Pin GPIO_PIN_12
+#define PRESSURE_MISO_GPIO_Port GPIOG
+#define PRESSURE_SCK_Pin GPIO_PIN_13
+#define PRESSURE_SCK_GPIO_Port GPIOG
+#define PRESSURE_MOSI_Pin GPIO_PIN_14
+#define PRESSURE_MOSI_GPIO_Port GPIOG
+#define PRESSURE_10_CS_Pin GPIO_PIN_15
+#define PRESSURE_10_CS_GPIO_Port GPIOG
 #define LED2_Pin GPIO_PIN_7
 #define LED2_GPIO_Port GPIOB
+#define ANGLE_3_CS_Pin GPIO_PIN_9
+#define ANGLE_3_CS_GPIO_Port GPIOB
+#define ANGLE_2_CS_Pin GPIO_PIN_0
+#define ANGLE_2_CS_GPIO_Port GPIOE
+#define ANGLE_1_CS_Pin GPIO_PIN_1
+#define ANGLE_1_CS_GPIO_Port GPIOE
 
 /* ########################## Assert Selection ############################## */
 /**
@@ -128,21 +193,19 @@
 
 #define JOINT_NUM 4
 
-#define ANALOG_NUM 8
+#define hspi_Ethercat	hspi1
+#define hspi_IMU		hspi2
+#define hspi_AD 		hspi3
+#define hspi_ANGLE 		hspi4
+#define hspi_DA			hspi5
+#define hspi_PRESSURE	hspi6
 
-#define DIGITAL_NUM 8
+#define htim_ANGLE_0 		htim1
+#define htim_ANGLE_1		htim3
+#define htim_ANGLE_2		htim4
+#define htim_ANGLE_3		htim5
 
-
-#define hspi_Ethercat							hspi1
-
-
-
-#define hspi_DA	hspi5
-#define hspi_AD hspi3
-#define hspi_ANGLE hspi4
-#define htim_ANGLE htim1
-
-#define TTTimer htim2
+#define TTTimer 			htim2
 
 
 

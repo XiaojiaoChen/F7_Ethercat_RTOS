@@ -11,10 +11,10 @@
 
 #include "stm32f7xx_hal.h"
 
-#define UART_TX_BUF_SIZE 200
+#define UART_TX_BUF_SIZE 500
 #define UART_RX_BUF_SIZE 300
 
-#define UART_TX_BUF_NUM	5
+#define UART_TX_BUF_NUM	10
 
 typedef struct UART_DEVICE_STRUCT{
 
@@ -30,6 +30,12 @@ typedef struct UART_DEVICE_STRUCT{
 	uint16_t countRxBuf;
 
 	uint16_t Received;
+
+	int32_t TxStart;
+	int32_t TxEnd;
+
+	int32_t lastTxTime;
+	uint32_t lastTxCount;
 
 }UART_DEVICE;
 extern UART_DEVICE UsartDevice;

@@ -9,8 +9,8 @@
 #include "math.h"
 #include "string.h"
 
-#define IMU_CS_LOW()  SPI2_CS_GPIO_Port->BSRR=(uint32_t)SPI2_CS_Pin<<16U;
-#define IMU_CS_HIGH() SPI2_CS_GPIO_Port->BSRR=SPI2_CS_Pin;
+#define IMU_0_CS_LOW()  IMU_0_CS_GPIO_Port->BSRR=(uint32_t)IMU_0_CS_Pin<<16U;
+#define IMU_0_CS_HIGH() IMU_0_CS_GPIO_Port->BSRR=IMU_0_CS_Pin;
 
 
 static float radius=0.5;
@@ -22,9 +22,9 @@ static uint32_t getRawSCC2130(IMU_DEVICE *ptIMUDev,uint32_t cmd)
 	uint32_t ret;
 	cmd16[0]=(uint16_t)(cmd>>16);
 	cmd16[1]=(uint16_t)cmd;
-	IMU_CS_LOW();
+	IMU_0_CS_LOW();
 	HAL_SPI_TransmitReceive(ptIMUDev->IMU_spi,(uint8_t *)cmd16,(uint8_t *)AccReceiveBuf,2,1);
-	IMU_CS_HIGH();
+	IMU_0_CS_HIGH();
 	ret=((uint32_t)AccReceiveBuf[0])<<16 | ((uint32_t)AccReceiveBuf[1]);
 	return ret;
 }

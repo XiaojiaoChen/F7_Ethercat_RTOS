@@ -17,7 +17,7 @@ static void LTC2668_write(DA_DEVICE *ptDADevice,uint8_t dac_command, uint8_t dac
   DA_Transfer_Send[1] = dac_code;
 
   DA_CS_LOW();
-  HAL_SPI_Transmit(ptDADevice->DA_spi,(uint8_t *)DA_Transfer_Send,2,1);
+  HAL_SPI_Transmit_IT(ptDADevice->DA_spi,(uint8_t *)DA_Transfer_Send,2);
   DA_CS_HIGH();
   
 }
