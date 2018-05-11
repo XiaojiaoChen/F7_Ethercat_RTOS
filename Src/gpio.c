@@ -92,11 +92,12 @@ void MX_GPIO_Init(void)
                           |IMU_1_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOG, AD_CONV_Pin|AD_RESET_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(AD_CONV_GPIO_Port, AD_CONV_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOG, PRESSURE_31_CS_Pin|PRESSURE_30_CS_Pin|PRESSURE_21_CS_Pin|PRESSURE_20_CS_Pin 
-                          |PRESSURE_11_CS_Pin|PRESSURE_01_CS_Pin|PRESSURE_00_CS_Pin|PRESSURE_10_CS_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOG, AD_RESET_Pin|PRESSURE_31_CS_Pin|PRESSURE_30_CS_Pin|PRESSURE_21_CS_Pin 
+                          |PRESSURE_20_CS_Pin|PRESSURE_11_CS_Pin|PRESSURE_01_CS_Pin|PRESSURE_00_CS_Pin 
+                          |PRESSURE_10_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(AD_CS_GPIO_Port, AD_CS_Pin, GPIO_PIN_SET);
@@ -114,7 +115,7 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = BUTTON_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(BUTTON_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PBPin PBPin PBPin PBPin */
@@ -127,7 +128,7 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pins : PFPin PFPin PFPin PFPin */
   GPIO_InitStruct.Pin = ANGLE_3_Z_Pin|ANGLE_2_Z_Pin|ANGLE_0_Z_Pin|ANGLE_1_Z_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PDPin PDPin PDPin PDPin 
@@ -141,14 +142,21 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pins : PGPin PGPin PGPin PGPin 
                            PGPin PGPin PGPin PGPin 
-                           PGPin PGPin */
-  GPIO_InitStruct.Pin = AD_CONV_Pin|AD_RESET_Pin|PRESSURE_31_CS_Pin|PRESSURE_30_CS_Pin 
-                          |PRESSURE_21_CS_Pin|PRESSURE_20_CS_Pin|PRESSURE_11_CS_Pin|PRESSURE_01_CS_Pin 
-                          |PRESSURE_00_CS_Pin|PRESSURE_10_CS_Pin;
+                           PGPin */
+  GPIO_InitStruct.Pin = AD_CONV_Pin|PRESSURE_31_CS_Pin|PRESSURE_30_CS_Pin|PRESSURE_21_CS_Pin 
+                          |PRESSURE_20_CS_Pin|PRESSURE_11_CS_Pin|PRESSURE_01_CS_Pin|PRESSURE_00_CS_Pin 
+                          |PRESSURE_10_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = AD_RESET_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(AD_RESET_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = AD_CS_Pin;
@@ -167,7 +175,7 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = AD_BUSY_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(AD_BUSY_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/

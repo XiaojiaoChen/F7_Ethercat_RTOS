@@ -18,7 +18,7 @@ struct Rotary_Plate{
 
 struct SHELINDER{
 	float lmax;
-	float x0;
+	float l0;
 	float A;
 	float v0;
 	float m;
@@ -32,6 +32,7 @@ struct MYJOINT{
 	float I;
 	float B;
 	float K;
+	float x0;
 	float lamda;
 	float Psource;
 	struct Rotary_Plate rotaryPlate;

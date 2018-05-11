@@ -40,7 +40,6 @@ Copyright (c) Hilscher Gesellschaft fuer Systemautomation mbH. All Rights Reserv
 /*****************************************************************************/
 #include <Central.h>
 #include "cifXApplicationDemo.h"
-#include "TerminalHandler.h"
 #include "EventHandler.h"
 #include <stdbool.h>
 #include "OS_Includes.h"
@@ -52,10 +51,8 @@ Copyright (c) Hilscher Gesellschaft fuer Systemautomation mbH. All Rights Reserv
 #include "rcX_Public.h"
 #include "main.h"
 
-extern CENTRAL gCentral;
 APP_DATA_T tAppData = {0};
 CIFXHANDLE hDriver = NULL;  /** Handle of cifX driver                    */
-
 static int32_t initCifXToolkit();
 static bool isCookieAvailable(PDEVICEINSTANCE ptDevInstance, uint32_t ulTimeoutInMs);
 
@@ -67,7 +64,6 @@ static bool isCookieAvailable(PDEVICEINSTANCE ptDevInstance, uint32_t ulTimeoutI
 void EthercatCyclicIODataHandler()
 {
   long            lRet = CIFX_NO_ERROR; /** Return value for common error codes  */
-  CENTRAL *ptCentral = &gCentral;
   APP_DATA_T      *ptAppData = &tAppData;
 
   if(ptAppData->hChannel[0] != NULL){
@@ -179,6 +175,19 @@ lRet = xChannelOpen(hDriver, "cifX0", 0, &tAppData.hChannel[0]);
     	  Error_Handler();
       }
       /** now the bus is running */
+ //     Protocol_SendFirstPacket(&tAppData);
+//      localc1=TIC();
+//      localc2=TIC();
+//      while(tAppData.fRunning && lRet == CIFX_NO_ERROR){
+//     		/** check and process incoming packets */
+//     		  lRet = EthercatPacketEventHandler();
+//     		  if(lRet != CIFX_NO_ERROR)
+//     			  localc2=TIC();
+//     		  if((localc2-localc1)>myTimeout)
+//     			  break;
+//      }
+//      c2=localc2;
+//      c1=localc1;
     }
   }
   return lRet;

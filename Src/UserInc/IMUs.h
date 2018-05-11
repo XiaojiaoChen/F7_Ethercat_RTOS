@@ -1,12 +1,12 @@
 /*
- * SCC2130D08.h
+ * IMUs.h
  *
  *  Created on: Dec 27, 2017
  *      Author: 402072495
  */
 
-#ifndef USER_INC_SCC2130D08_H_
-#define USER_INC_SCC2130D08_H_
+#ifndef USER_INC_IMUS_H_
+#define USER_INC_IMUS_H_
 #include "stm32f7xx_hal.h"
 //#define RSOK(dat) ((uint8_t)(((uint32_t)((dat)<<6))>>24) == 1)
 
@@ -64,11 +64,33 @@ typedef struct
 
 typedef struct IMU_DEVICE_STRUCT
 {
+	struct IMU_HUB_STRUCT *pParent;
+	uint16_t jointNum;
+	float radius;
 	ACCDATA AccData;
 	SCC2130_STATE scc2130_state;
-	SPI_HandleTypeDef *IMU_spi;
+	SPI_HandleTypeDef *hspi;
+	SPI_InitTypeDef  spiConfiguration;
+	GPIO_TypeDef *CS_Port;
+	uint16_t CS_Pin;
 	void (*getIMU)(struct IMU_DEVICE_STRUCT *);
 }IMU_DEVICE;
+
+typedef struct IMU_HUB_STRUCT
+{
+	struct CENTRAL_STRUCT *pParent;
+	IMU_DEVICE *IMUDevices[JOINT_NUM_MAX];
+
+	uint16_t Num;
+	void (*getIMU)(struct IMU_HUB_STRUCT *,uint16_t);
+	void (*getIMUAll)(struct IMU_HUB_STRUCT *);
+	void (*attach)(struct IMU_HUB_STRUCT *,IMU_DEVICE *);
+}IMU_HUB;
+
+
+
+IMU_HUB *IMUHUB(struct CENTRAL_STRUCT *);
+IMU_DEVICE *SCC2130(uint16_t);
 
 
 void Init_IMU();

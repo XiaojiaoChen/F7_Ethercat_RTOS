@@ -27,9 +27,9 @@ typedef enum{
 
 typedef struct{
 	float x0;
-	float *x_out;
-	float *v_out;
-	float *a_out;
+	float x_out;
+	float v_out;
+	float a_out;
 	float T;
 	float xd;
 }TYPE_STEP;
@@ -38,9 +38,9 @@ typedef struct{
 typedef struct{
 	float x0;
 	float x1;
-	float *x_out;
-	float *v_out;
-	float *a_out;
+	float x_out;
+	float v_out;
+	float a_out;
 	float t;
 	float holdT;
 	int dir[2];
@@ -49,9 +49,9 @@ typedef struct{
 typedef struct{
 	float x0;
 	float x1;
-	float *x_out;
-	float *v_out;
-	float *a_out;
+	float x_out;
+	float v_out;
+	float a_out;
 	float t;
 	float T;
 	float ts;
@@ -69,9 +69,9 @@ typedef struct{
 typedef struct{
 	float x0;
 	float x1;
-	float *x_out;
-	float *v_out;
-	float *a_out;
+	float x_out;
+	float v_out;
+	float a_out;
 	float transT;
 	float holdT;
 	float _t[5];
@@ -83,9 +83,9 @@ typedef struct{
 typedef struct{
 	float x0;
 	float v0;
-	float *x_out;
-	float *v_out;
-	float *a_out;
+	float x_out;
+	float v_out;
+	float a_out;
 	float t;
 	float T;
 	float amplitude;
@@ -110,9 +110,9 @@ struct __TRAJ_GEN{
 	float xd;
 	float vd;
 	float ad;
-	float *x_out;
-	float *v_out;
-	float *a_out;
+	float x_out;
+	float v_out;
+	float a_out;
 	float vaverage;
 	TYPE_STEP   step;
 	TYPE_SQUARE square;
@@ -124,11 +124,11 @@ struct __TRAJ_GEN{
 typedef struct __TRAJ_GEN TRAJ_GEN;
 
 /**one trajectory object*/
-extern TRAJ_GEN positionTrajectory;
-extern TRAJ_GEN stiffnessTrajectory;
+//extern TRAJ_GEN positionTrajectory;
+//extern TRAJ_GEN stiffnessTrajectory;
 
 /***call once in setup********/
-void InitTraj(TRAJ_GEN *traj,float vaverage,float  *x_out,float *v_out,float *a_out);
+void InitTraj(TRAJ_GEN *traj,float vaverage);
 
 /***call in loop********/
 void TrajGen(TRAJ_GEN *traj,uint32_t globalT);

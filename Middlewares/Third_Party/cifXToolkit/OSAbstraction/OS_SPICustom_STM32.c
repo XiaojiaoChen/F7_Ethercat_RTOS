@@ -89,15 +89,15 @@ void OS_SpiTransfer(void* pvOSDependent, uint8_t* pbSend, uint8_t* pbRecv, uint3
 
 	/*no receive data requested (just transmit) */
 	if(pbRecv==NULL){
-		tRet=HAL_SPI_Transmit(&hspi_Ethercat, pbSend, (uint16_t) ulLen,1);
+		tRet=HAL_SPI_Transmit_IT(&hspi_Ethercat, pbSend, (uint16_t) ulLen);
 
 	}
 	/*no transmit data (just receive) */
 	else if(pbSend==NULL) {
-		tRet=HAL_SPI_Receive(&hspi_Ethercat, pbRecv, (uint16_t) ulLen,1);
+		tRet=HAL_SPI_Receive_IT(&hspi_Ethercat, pbRecv, (uint16_t) ulLen);
 	}
 	else {
-		tRet=HAL_SPI_TransmitReceive(&hspi_Ethercat, pbSend, pbRecv, (uint16_t) ulLen,1);
+		tRet=HAL_SPI_TransmitReceive_IT(&hspi_Ethercat, pbSend, pbRecv, (uint16_t) ulLen);
 	}
 
 
@@ -106,7 +106,7 @@ void OS_SpiTransfer(void* pvOSDependent, uint8_t* pbSend, uint8_t* pbRecv, uint3
 	}
 
 	/*blocking SPI transfer, wait until all bytes are transferred*/
-	//while(HAL_SPI_STATE_READY != HAL_SPI_GetState(&hspi_Ethercat));
+	while(HAL_SPI_STATE_READY != HAL_SPI_GetState(&hspi_Ethercat));
 }
 
 /*****************************************************************************/

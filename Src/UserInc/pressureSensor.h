@@ -49,14 +49,14 @@ typedef struct PRESSUREANA_DEVICE_STRUCT{
 
 typedef struct PRESSURE_HUB_STRUCT{
 	struct CENTRAL_STRUCT *pParent;
-	PRESSURE_DEVICE *pressureDevices[JOINT_NUM][2];
-	float Pressure[JOINT_NUM][2];
-	float Temperature[JOINT_NUM][2];
+	PRESSURE_DEVICE *pressureDevices[JOINT_NUM_MAX][2];
+	float Pressure[JOINT_NUM_MAX][2];
+	float Temperature[JOINT_NUM_MAX][2];
 	uint16_t Num;
 	uint16_t DMAnum;
 	int32_t DMAStartTime;
 	int32_t DMAEndTime;
-	int32_t lastDMATime;
+	int32_t LastDMATime;
 	uint16_t DMACompleted;
 	float (*getPressure)(struct PRESSURE_HUB_STRUCT *,uint16_t ,uint16_t );
 	void (*attach)(struct PRESSURE_HUB_STRUCT *ptPressureHub,PRESSURE_DEVICE *ptPressureDev);
@@ -67,6 +67,6 @@ typedef struct PRESSURE_HUB_STRUCT{
 
 PRESSURE_HUB *PRESSUREHUB(struct CENTRAL_STRUCT *ptCentral);
 HW060ABSOLUTE_DEVICE *HW060PAAA5(AD_DEVICE *,uint16_t,uint16_t,uint16_t);
-HW060GAUGE_DEVICE *HW060PGSA3(uint16_t,uint16_t);
+HW060GAUGE_DEVICE *HWPGSA3(uint16_t,uint16_t);
 void pressure_SPICallback(PRESSURE_HUB *ptPressureHub);
 #endif /* USER_INC_PRESSURESENSOR_H_ */

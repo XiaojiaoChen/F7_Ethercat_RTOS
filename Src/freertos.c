@@ -52,7 +52,6 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN Includes */     
-#include "Central.h"
 #include "usart.h"
 #include "main.h"
 #include "UserInterface.h"
@@ -75,9 +74,7 @@ uint32_t EthCyclicTaskBuffer[ 2048 ];
 osStaticThreadDef_t EthCyclicTaskControlBlock;
 
 /* USER CODE BEGIN Variables */
-int EthCyclicTask_Ready = 0;
-
-
+uint16_t start_transmission=1;
 /* USER CODE END Variables */
 
 /* Function prototypes -------------------------------------------------------*/
@@ -157,49 +154,35 @@ void sendTaskFunc(void const * argument)
   /* USER CODE BEGIN sendTaskFunc */
 	TickType_t xLastWakeTime=xTaskGetTickCount();;
 	TickType_t sendTaskPeriod=pdMS_TO_TICKS(10);   //100ms Period
-	AS5311_DEVICE *ptAngle1=(AS5311_DEVICE *)(ptCentral->ptAngleHub->angleDevices[0]);
-  /* Infinite loop */
+	  /* Infinite loop */
   for(;;)
   {
+	  if(start_transmission){
 	  /*************100us*********************/
-	//  printf("%.3f",HAL_GetTick()/1000.0f);
-	  printf("%.3f %.6f %.6f %.6f     %2.5f %2.5f %2.5f %2.5f %2.5f %2.5f %2.5f  %2.5f  %6.0f %6.0f %6.0f %6.0f %6.0f %6.0f %6.0f %6.0f   %ld %ld  %ld %ld %ld %u %ld %ld %ld\r\n",
+	  printf("%.3f %2.5f %2.5f %3.3f %3.3f %4.2f %4.2f %6.0f %6.0f %6.0f %6.0f  %3.3f %3.3f %2.4f %2.4f %2.4f %ld\r\n",
 	  			   HAL_GetTick()/1000.0f,
 	  			   ptCentral->ptSensorData->angle[0],
-				   ptAngle1->AngleABZ,
-				   ptAngle1->AngleSPI,
+				   ptCentral->ptNominalData->angle[0],
+				   ptCentral->ptSensorData->velocity[0],
+				   ptCentral->ptNominalData->velocity[0],
+				   ptCentral->ptSensorData->acceleration[0],
+				   ptCentral->ptNominalData->acceleration[0],
+
+				   ptCentral->ptSensorData->pressure[0][0],
+				   ptCentral->ptNominalData->pressure[0][0],
+
+				   ptCentral->ptSensorData->pressure[0][1],
+				   ptCentral->ptNominalData->pressure[0][1],
+
+				   ptCentral->ptSensorData->torque[0],
+				   ptCentral->ptSensorData->force[0],
 
 				   ptCentral->ADDevice.fChannel[0],
 				   ptCentral->ADDevice.fChannel[1],
 				   ptCentral->ADDevice.fChannel[2],
-				   ptCentral->ADDevice.fChannel[3],
-				   ptCentral->ADDevice.fChannel[4],
-				   ptCentral->ADDevice.fChannel[5],
-				   ptCentral->ADDevice.fChannel[6],
-				   ptCentral->ADDevice.fChannel[7],
-
-				   ptCentral->ptSensorData->pressure[0][0],
-				   ptCentral->ptSensorData->pressure[0][1],
-				   ptCentral->ptSensorData->pressure[1][0],
-				   ptCentral->ptSensorData->pressure[1][1],
-				   ptCentral->ptSensorData->pressure[2][0],
-				   ptCentral->ptSensorData->pressure[2][1],
-				   ptCentral->ptSensorData->pressure[3][0],
-				   ptCentral->ptSensorData->pressure[3][1],
-
-
-
-
-				  ptCentral->process_time.SensorTime,
-				  ptCentral->process_time.EthercatIOTime,
-				  ptCentral->process_time.EthercatPacketTime,
-				  ptCentral->process_time.taskTime1,
-				  ptCentral->process_time.taskTime2,
-				  UsartDevice.bufferedTxNum,
-				  UsartDevice.lastTxCount,
-				  UsartDevice.lastTxTime,
-				  ptCentral->ptPressureHub->lastDMATime);
-
+				   ptCentral->process_time.taskTime1
+				   );
+	  }
 	  vTaskDelayUntil(&xLastWakeTime,sendTaskPeriod);
   }
   /* USER CODE END sendTaskFunc */
@@ -213,20 +196,19 @@ void EthPacketTaskFunc(void const * argument)
 	TickType_t EthPacketTaskPeriod=pdMS_TO_TICKS(10);   //10ms Period for command handle
 	int32_t lRet;
     lRet = Protocol_SendFirstPacket(&tAppData);
-    int32_t c1,c2;
+
   /* Infinite loop */
     /****100 us****/
   for(;;)
   {
 	  while(tAppData.fRunning && lRet == CIFX_NO_ERROR){
-		  c1 = TIC();
+
 		/** check and process incoming packets */
 		  lRet = EthercatPacketEventHandler();
 
 		/* process Terminal command, if any.*/
 		  Usart_TerminalHandler();
-		  c2=TIC();
-		  ptCentral->process_time.taskTime2 = c2-c1;
+
 		  vTaskDelayUntil(&xLastWakeTime,EthPacketTaskPeriod);
 		}
 		/** remove calling of App_IODataHandler, because we don't have valid IO Data any more */
@@ -241,36 +223,29 @@ void EthCyclicTaskFunc(void const * argument)
   /* USER CODE BEGIN EthCyclicTaskFunc */
 	TickType_t xLastWakeTime=xTaskGetTickCount();
 	TickType_t EthCyclicTaskPeriod=pdMS_TO_TICKS(1);   //1ms Period
-	CENTRAL *ptCentral=&gCentral;
-	int32_t c1,c2,c3,c4;
+	int32_t c1,c2;
+	int32_t c3=0;
+	int32_t c4=0;
   /* Infinite loop */
 	/*****500 us******/
   for(;;)
   {
 	  c1 = TIC();
-	  /*updateData part: 400 us
-	   *Update Sensor: 250 us
-	   *		1.Pressure DMA 8 channels	 200 us
-	   *		2.AD board 8 channels		  40 us
-	   *		3.Angle blocking 4 channels  100 us
-	   *
-	   *EthercatIO: 150 us*/
+	  /*update Sensor Data, 200 us, and EthercatDataExchange 200us*/
 	  ptCentral->updateData(ptCentral);
-
 	  c2 = TIC();
 
+	  if(ptCentral->gogogo){
 	  /*control according to commands,50us*/
-	  ptCentral->control(ptCentral);
-
+	  ptCentral->ptControlHub->control(ptCentral->ptControlHub,0);
 	  c3 = TIC();
 
 	  /*apply control outcome, 50us*/
-	  ptCentral->applyControl(ptCentral);
+	  ptCentral->ptActuatorHub->moveJoint(ptCentral->ptActuatorHub,0);
 
-	  c4=TIC();
+	  }
+	  c4 = TIC();
 	  ptCentral->process_time.taskTime1 = c4-c1;
-
-	//  printf("Time:%ld %ld %ld\r\n",c2-c1,c3-c2,c4-c3);
 	  vTaskDelayUntil(&xLastWakeTime,EthCyclicTaskPeriod);
   }
   /* USER CODE END EthCyclicTaskFunc */

@@ -30,8 +30,8 @@ typedef struct REGULATOR_DEVICE_STRUCT{
 
 typedef struct REGULATOR_HUB_STRUCT{
 	struct CENTRAL_STRUCT *pParent;
-	REGULATOR_DEVICE *regulator[JOINT_NUM*2];
-	float pressureCommand[JOINT_NUM*2];
+	REGULATOR_DEVICE *regulator[JOINT_NUM_MAX*2];
+	float pressureCommand[JOINT_NUM_MAX*2];
 	uint16_t num;
 	void (*attach)(struct REGULATOR_HUB_STRUCT *,struct REGULATOR_DEVICE_STRUCT *);
 	void (*setPressure)(struct REGULATOR_HUB_STRUCT *,uint16_t,float);

@@ -55,12 +55,20 @@ Copyright (c) Hilscher Gesellschaft fuer Systemautomation mbH. All Rights Reserv
 typedef struct APP_INPUT_DATA_Ttag {
 
 	uint32_t timeTick;
-	float	angle[JOINT_NUM];				//angle=
-	float 	velocity[JOINT_NUM];
-	float 	acceleration[JOINT_NUM];
-	float   stiffness[JOINT_NUM];
-	float 	torque[JOINT_NUM];
-	float 	pressure[JOINT_NUM][2];
+	//original sensor data
+	float	angle[JOINT_NUM_MAX];				//angle=
+	float 	velocity[JOINT_NUM_MAX];
+	float 	acceleration[JOINT_NUM_MAX];
+	float   stiffness[JOINT_NUM_MAX];
+	float 	torque[JOINT_NUM_MAX];
+	float   force[JOINT_NUM_MAX];
+	float 	pressure[JOINT_NUM_MAX][2];
+	//kalman filtered  data
+	float	filtered_Angle[JOINT_NUM_MAX];
+	float 	filtered_velocity[JOINT_NUM_MAX];
+	float 	filtered_acceleration[JOINT_NUM_MAX];
+	float 	filtered_pressure[JOINT_NUM_MAX][2];
+	float 	filtered_pressureDot[JOINT_NUM_MAX][2];
 
 }__attribute__((packed)) APP_INPUT_DATA_T;
 
@@ -68,13 +76,13 @@ typedef struct APP_INPUT_DATA_Ttag {
 typedef struct APP_OUTPUT_DATA_Ttag {
 
 
-	float	angle[JOINT_NUM];				//angle=
-	float 	velocity[JOINT_NUM];
-	float 	acceleration[JOINT_NUM];
-	float   stiffness[JOINT_NUM];
-	float 	torque[JOINT_NUM];
-	float 	pressure[JOINT_NUM][2];
-	int8_t	commandType[JOINT_NUM];
+	float	angle[JOINT_NUM_MAX];				//angle=
+	float 	velocity[JOINT_NUM_MAX];
+	float 	acceleration[JOINT_NUM_MAX];
+	float   stiffness[JOINT_NUM_MAX];
+	float 	torque[JOINT_NUM_MAX];
+	float 	pressure[JOINT_NUM_MAX][2];
+	int8_t	commandType[JOINT_NUM_MAX];
 
 }__attribute__((packed)) APP_OUTPUT_DATA_T;
 

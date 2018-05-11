@@ -13,6 +13,9 @@ typedef struct AD_DEVICE_STRUCT{
 	float fMaxVoltage;
 	float fRange;
 	float fMid;
+	int32_t DMAStartTime;
+	int32_t DMAEndTime;
+	int32_t LastDMATime;
 	uint16_t uChannelNum;
 	SPI_HandleTypeDef *AD_spi;
 	uint8_t ucDataFlag;

@@ -191,7 +191,7 @@
 
 /* USER CODE BEGIN Private defines */
 
-#define JOINT_NUM 4
+#define JOINT_NUM_MAX 4
 
 #define hspi_Ethercat	hspi1
 #define hspi_IMU		hspi2

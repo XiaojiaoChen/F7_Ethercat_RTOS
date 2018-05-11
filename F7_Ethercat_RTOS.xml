@@ -13,6 +13,7 @@
   <board id="f7_ethercat_rtos">
     <name>F7_Ethercat_RTOS</name>
     <dbgIF>SWD</dbgIF>
+    <dbgIF>JTAG</dbgIF>
     <dbgDEV>ST-Link</dbgDEV>
     <mcuId>stm32f767zitx</mcuId>
   </board>

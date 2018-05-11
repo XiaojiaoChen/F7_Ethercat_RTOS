@@ -90,6 +90,7 @@ static void regulatorHub_attach(struct REGULATOR_HUB_STRUCT *pRegulatorHub,struc
 static void regulatorHub_setPressure(struct REGULATOR_HUB_STRUCT *ptRegulatorHub,uint16_t num,float pre)
 {
 	REGULATOR_DEVICE *ptRegulatorDev = ptRegulatorHub->regulator[num];
+	ptRegulatorHub->pressureCommand[num] = pre;
 	ptRegulatorDev->setPressure(ptRegulatorDev,pre);
 }
 static float regulatorHub_getPressure(struct REGULATOR_HUB_STRUCT *ptRegulatorHub,uint16_t num)
@@ -122,9 +123,7 @@ REGULATOR_HUB *REGULATORHUB(CENTRAL *ptCentral)
 	ptRegulatorHub->getPressure = regulatorHub_getPressure;
 	ptRegulatorHub->setZero = regulatorHub_setZero;
 
-	//add one regulator
-	REGULATOR_DEVICE *ptITV2030Dev = ITV2030(&(ptCentral->DADevice),8,&(ptCentral->ADDevice),0,4000000,0);
-	ptRegulatorHub->attach(ptRegulatorHub,ptITV2030Dev);
+
 
 	return ptRegulatorHub;
 }

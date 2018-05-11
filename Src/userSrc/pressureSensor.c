@@ -14,11 +14,11 @@ static uint32_t DummyByte[] = { 0xFFFFFFFF };
 static float PaPerPSI = 6895;
 float Patm = 101325;
 
-GPIO_TypeDef *PRESSURE_CS_GPIO_Ports[JOINT_NUM][2] = {  {PRESSURE_00_CS_GPIO_Port, PRESSURE_01_CS_GPIO_Port},
+GPIO_TypeDef *PRESSURE_CS_GPIO_Ports[JOINT_NUM_MAX][2] = {  {PRESSURE_00_CS_GPIO_Port, PRESSURE_01_CS_GPIO_Port},
 														{PRESSURE_10_CS_GPIO_Port, PRESSURE_11_CS_GPIO_Port},
 														{PRESSURE_20_CS_GPIO_Port, PRESSURE_21_CS_GPIO_Port},
 														{PRESSURE_30_CS_GPIO_Port, PRESSURE_31_CS_GPIO_Port}};
-uint16_t PRESSURE_CS_Pins[JOINT_NUM][2] = { {PRESSURE_00_CS_Pin,PRESSURE_01_CS_Pin},
+uint16_t PRESSURE_CS_Pins[JOINT_NUM_MAX][2] = { {PRESSURE_00_CS_Pin,PRESSURE_01_CS_Pin},
 											{PRESSURE_10_CS_Pin, PRESSURE_11_CS_Pin},
 											{PRESSURE_20_CS_Pin, PRESSURE_21_CS_Pin},
 											{PRESSURE_30_CS_Pin,PRESSURE_31_CS_Pin}};
@@ -32,7 +32,7 @@ static void PRESSURESPI_CS_HIGH(HW060GAUGE_DEVICE *ptPRESSURESPIDev) {
 	ptPRESSURESPIDev->CS_Port->BSRR = (uint32_t) ptPRESSURESPIDev->CS_Pin;
 }
 
-static void HW060PGSA3_readRawSPI(HW060GAUGE_DEVICE *ptPressureDev) {
+static void HWPGSA3_readRawSPI(HW060GAUGE_DEVICE *ptPressureDev) {
 	uint16_t tem[2];
 	/*read SPI pressure and temperature, 4 bytes*/
 	PRESSURESPI_CS_LOW(ptPressureDev);
@@ -42,40 +42,40 @@ static void HW060PGSA3_readRawSPI(HW060GAUGE_DEVICE *ptPressureDev) {
 	//ptPressureDev->rawSPITemperature = (int16_t) (tem[1] >> 5);
 }
 
-static void HW060PGSA3_ValidateData(HW060GAUGE_DEVICE *pt) {
+static void HWPGSA3_ValidateData(HW060GAUGE_DEVICE *pt) {
 	pt->base.pressure = (float) (pt->rawSPIPressure - pt->uOutMin) / (pt->uOutMax - pt->uOutMin) * (pt->PMax - pt->PMin) + pt->PMin; //unit Pa
 	//pt->Temperature = pt->rawSPITemperature / 10.235f - 50.0f;
 
 }
 
-static float HW060PGSA3_getPressure(PRESSURE_DEVICE *ptPressureDev) {
+static float HWPGSA3_getPressure(PRESSURE_DEVICE *ptPressureDev) {
 	HW060GAUGE_DEVICE *pt = (HW060GAUGE_DEVICE *) ptPressureDev;
-	HW060PGSA3_readRawSPI(pt);
-	HW060PGSA3_ValidateData(pt);
+	HWPGSA3_readRawSPI(pt);
+	HWPGSA3_ValidateData(pt);
 	return pt->Pressure;
 }
 
-HW060GAUGE_DEVICE *HW060PGSA3(uint16_t jointNum, uint16_t seq) {
-	HW060GAUGE_DEVICE *ptHW060PGSA3 = (HW060GAUGE_DEVICE *) malloc(sizeof(HW060GAUGE_DEVICE));
-	if (ptHW060PGSA3 == NULL)
+HW060GAUGE_DEVICE *HWPGSA3(uint16_t jointNum, uint16_t seq) {
+	HW060GAUGE_DEVICE *ptHWPGSA3 = (HW060GAUGE_DEVICE *) malloc(sizeof(HW060GAUGE_DEVICE));
+	if (ptHWPGSA3 == NULL)
 		return NULL;
-	memset(ptHW060PGSA3, 0, sizeof(HW060GAUGE_DEVICE));
+	memset(ptHWPGSA3, 0, sizeof(HW060GAUGE_DEVICE));
 
-	ptHW060PGSA3->base.jointNum = jointNum;
-	ptHW060PGSA3->base.position = seq;
+	ptHWPGSA3->base.jointNum = jointNum;
+	ptHWPGSA3->base.position = seq;
 
-	ptHW060PGSA3->base.getPressure = HW060PGSA3_getPressure;
+	ptHWPGSA3->base.getPressure = HWPGSA3_getPressure;
 
-	ptHW060PGSA3->pressure_spi = &hspi_PRESSURE;
-	ptHW060PGSA3->CS_Port = PRESSURE_CS_GPIO_Ports[jointNum][seq];
-	ptHW060PGSA3->CS_Pin = PRESSURE_CS_Pins[jointNum][seq];
+	ptHWPGSA3->pressure_spi = &hspi_PRESSURE;
+	ptHWPGSA3->CS_Port = PRESSURE_CS_GPIO_Ports[jointNum][seq];
+	ptHWPGSA3->CS_Pin = PRESSURE_CS_Pins[jointNum][seq];
 
 
-	ptHW060PGSA3->PMax = 60 * PaPerPSI + Patm;  //60*6895 Pa
-	ptHW060PGSA3->PMin = Patm;
-	ptHW060PGSA3->uOutMin = 0x0666;
-	ptHW060PGSA3->uOutMax = 0x3999;
-	return ptHW060PGSA3;
+	ptHWPGSA3->PMax = 30 * PaPerPSI + Patm;  //60*6895 Pa
+	ptHWPGSA3->PMin = Patm;
+	ptHWPGSA3->uOutMin = 0x0666;
+	ptHWPGSA3->uOutMax = 0x3999;
+	return ptHWPGSA3;
 }
 /****************************************************************************************************************/
 
@@ -121,7 +121,7 @@ static float pressureHub_getPressure(PRESSURE_HUB *ptPressureHub, uint16_t joint
 static uint16_t pressureHub_getPressureAll(PRESSURE_HUB *ptPressureHub) {
 	PRESSURE_DEVICE *pt;
 	uint16_t n = 0;
-	for (int i = 0; i < JOINT_NUM; i++)
+	for (int i = 0; i < JOINT_NUM_MAX; i++)
 		for (int j = 0; j < 2; j++)
 			if (NULL != (pt = ptPressureHub->pressureDevices[i][j])) {
 				ptPressureHub->Pressure[i][j] = pt->getPressure(pt);
@@ -147,7 +147,7 @@ void pressure_SPICallback(PRESSURE_HUB *ptPressureHub) {
 
 	//post calculation
 	ptPressureDevPre->rawSPIPressure = (int16_t) (ptPressureDevPre->rawData & 0x3FFF);
-	HW060PGSA3_ValidateData(ptPressureDevPre);
+	HWPGSA3_ValidateData(ptPressureDevPre);
 	*(ptPressureHub->Pressure[0]+ptPressureHub->DMAnum) = ptPressureDevPre->base.pressure;
 
 	//check if remaining
@@ -159,7 +159,7 @@ void pressure_SPICallback(PRESSURE_HUB *ptPressureHub) {
 	}
 	else{
 		ptPressureHub->DMAEndTime = TIC();
-		ptPressureHub->lastDMATime = ptPressureHub->DMAEndTime -ptPressureHub->DMAStartTime;
+		ptPressureHub->LastDMATime = ptPressureHub->DMAEndTime -ptPressureHub->DMAStartTime;
 		ptPressureHub->DMACompleted = 1;
 	}
 
@@ -184,30 +184,7 @@ PRESSURE_HUB *PRESSUREHUB(CENTRAL *ptCentral) {
 	ptPressureHub->getPressureAll = pressureHub_getPressureAll;
 	ptPressureHub->getPressureAll_DMA = pressureHub_getPressureAll_DMA;
 
-	HW060GAUGE_DEVICE *ptHW060PGSA3;
-	ptHW060PGSA3 = HW060PGSA3(0,0);
-	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHW060PGSA3);
 
-	ptHW060PGSA3 = HW060PGSA3(0,1);
-	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHW060PGSA3);
-
-	ptHW060PGSA3 = HW060PGSA3(1,0);
-	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHW060PGSA3);
-
-	ptHW060PGSA3 = HW060PGSA3(1,1);
-	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHW060PGSA3);
-
-	ptHW060PGSA3 = HW060PGSA3(2,0);
-	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHW060PGSA3);
-
-	ptHW060PGSA3 = HW060PGSA3(2,1);
-	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHW060PGSA3);
-
-	ptHW060PGSA3 = HW060PGSA3(3,0);
-	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHW060PGSA3);
-
-	ptHW060PGSA3 = HW060PGSA3(3,1);
-	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHW060PGSA3);
 
 
 

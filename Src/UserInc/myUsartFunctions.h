@@ -11,10 +11,37 @@
 
 #include "stm32f7xx_hal.h"
 
-#define UART_TX_BUF_SIZE 500
-#define UART_RX_BUF_SIZE 300
+#define UART_TX_BUF_SIZE 300
+#define UART_RX_BUF_SIZE 60
+#define COMMAND_SIZE 30
 
 #define UART_TX_BUF_NUM	10
+
+enum  {
+  OneJoint_UNKNOWN      = 0x00,
+  OneJoint_VALVE_0,
+  OneJoint_VALVE_1,
+  OneJoint_PRESSURE_0,
+  OneJoint_PRESSURE_1,
+  OneJoint_KP,
+  OneJoint_KI,
+  OneJoint_KD,
+  OneJoint_STIFFNESS,
+  OneJoint_QUIT,
+  OneJoint_START,
+  OneJoint_ZERO,
+  OneJoint_FLOW,
+  OneJoint_START_USART,
+  OneJoint_STOP_USART,
+  OneJoint_POSITION,
+  OneJoint_FEEDBACK,
+  OneJoint_LAST     /** just for determining number of commands in this list */
+};
+typedef struct APP_TERMINAL_CMD_Ttag {
+  int iCode;
+  char szString[50];
+  char szHelp[50];
+} APP_TERMINAL_CMD_T;
 
 typedef struct UART_DEVICE_STRUCT{
 
@@ -27,6 +54,10 @@ typedef struct UART_DEVICE_STRUCT{
 	uint16_t countTxBuf[UART_TX_BUF_NUM];
 
 	uint8_t RxBuf[UART_RX_BUF_SIZE];
+	uint8_t szCmd[COMMAND_SIZE];
+	float	uiArgv[3];
+	int     iArgc;
+    int usartCommandCode;
 	uint16_t countRxBuf;
 
 	uint16_t Received;

@@ -10,7 +10,7 @@ typedef struct ACTUATOR_STRUCT{
 	uint16_t jointNum;
 	uint16_t position;
 	struct ACTUATOR_HUB_STRUCT *pParent;
-	void (*act)(struct ACTUATOR_STRUCT *);
+	void (*act)(struct ACTUATOR_STRUCT *,float);
 	float command; //could be voltage, PWM duty ...
 }ACTUATOR;
 
@@ -22,7 +22,7 @@ typedef struct MPYE_VALVE_STRUCT{
 
 typedef struct ACTUATOR_HUB_STRUCT{
 	struct CENTRAL_STRUCT *pParent;
-	ACTUATOR *actuator[JOINT_NUM][2];
+	ACTUATOR *actuator[JOINT_NUM_MAX][2];
 	uint16_t num;
 	void (*attach)(struct ACTUATOR_HUB_STRUCT *,struct ACTUATOR_STRUCT *);
 	void (*moveJoint)(struct ACTUATOR_HUB_STRUCT *,uint16_t);

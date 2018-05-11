@@ -1,6 +1,6 @@
 [PreviousGenFiles]
 HeaderPath=C:/Users/40207/OneDrive/OneDriveDocumentation/STM32WorkSpaceOnedrive/F7_Ethercat_RTOS/Inc
-HeaderFiles=FreeRTOSConfig.h;stm32f7xx_it.h;stm32f7xx_hal_conf.h;main.h;gpio.h;spi.h;tim.h;usart.h;dma.h;
+HeaderFiles=FreeRTOSConfig.h;stm32f7xx_it.h;stm32f7xx_hal_conf.h;main.h;gpio.h;spi.h;tim.h;usart.h;dma.h;stm32_assert.h;
 SourcePath=C:/Users/40207/OneDrive/OneDriveDocumentation/STM32WorkSpaceOnedrive/F7_Ethercat_RTOS/Src
 SourceFiles=freertos.c;stm32f7xx_it.c;stm32f7xx_hal_msp.c;main.c;gpio.c;spi.c;tim.c;usart.c;stm32f7xx_hal_timebase_TIM.c;dma.c;
 

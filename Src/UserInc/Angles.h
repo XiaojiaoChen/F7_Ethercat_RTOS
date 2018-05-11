@@ -29,6 +29,8 @@ typedef struct ANGLE_DEVICE_STRUCT{
 
 typedef   struct AS5048_DEVICE_STRUCT{                            // Structure for data and parameters read from the AS5048 device
     ANGLE_DEVICE base;
+    uint16_t rawData;
+    uint16_t rawSPI;
 	float     RawAngle;
     float 	 RawAnglePre;
     float 		 AnglePre;
@@ -39,6 +41,9 @@ typedef   struct AS5048_DEVICE_STRUCT{                            // Structure f
     GPIO_TypeDef *CS_Port;
     uint16_t	CS_Pin;
     SPI_HandleTypeDef *hspi;
+    uint32_t spiBaudRatePrescalerStore;
+    uint32_t spiCLKPhaseStore;
+    uint32_t spiCLKPolarityStore;
 }AS5048_DEVICE;
 
 typedef struct MINI4096_DEVICE_STRUCT{
@@ -76,10 +81,6 @@ typedef struct AS5311_DEVICE_STRUCT{
     int16_t dir;
     int16_t loop;
 
-    KALMAN_FILTER kalman_filter;
-    float	kalmanQ[3];
-    float	kalmanR[3];
-    float 	kalmanDt;
 
     GPIO_TypeDef *CS_Port;
     uint16_t	CS_Pin;
@@ -92,10 +93,10 @@ typedef struct AS5311_DEVICE_STRUCT{
 
 typedef struct ANGLE_HUB_STRUCT{
 	struct CENTRAL_STRUCT *pParent;
-	ANGLE_DEVICE *angleDevices[JOINT_NUM];
-	float angles[JOINT_NUM];
-	float velocity[JOINT_NUM];
-	float acceleration[JOINT_NUM];
+	ANGLE_DEVICE *angleDevices[JOINT_NUM_MAX];
+	float angles[JOINT_NUM_MAX];
+	float velocity[JOINT_NUM_MAX];
+	float acceleration[JOINT_NUM_MAX];
 
 	uint16_t Num;
 	float   (*getAngle)(struct ANGLE_HUB_STRUCT *,uint16_t);
@@ -104,8 +105,8 @@ typedef struct ANGLE_HUB_STRUCT{
 }ANGLE_HUB;
 
 ANGLE_HUB *ANGLEHUB(struct CENTRAL_STRUCT *);
-MINI4096_DEVICE *MINI4096(SPI_HandleTypeDef *,GPIO_TypeDef *csPort,uint16_t csPin,uint16_t);
-AS5048_DEVICE *AS5048(SPI_HandleTypeDef *,GPIO_TypeDef *csPort,uint16_t csPin,uint16_t);
+MINI4096_DEVICE *MINI4096(uint16_t);
+AS5048_DEVICE *AS5048(uint16_t);
 AS5311_DEVICE *AS5311(uint16_t jointNum);
 void AS5311_EXTICallback(AS5311_DEVICE *ptAS5311Dev); //update Z and last AB
 #endif

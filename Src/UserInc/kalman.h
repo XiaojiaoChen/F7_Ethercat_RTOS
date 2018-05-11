@@ -2,6 +2,8 @@
 #define __KALMAN_H
 
 #include "stm32f7xx_hal.h"
+#include "main.h"
+#include "Central.h"
 #include "arm_math.h"
 
 #define N_State_Sim 2
@@ -12,10 +14,8 @@
 #define M_Input_Ful 1
 #define L_Measure_Ful 3
 
-typedef enum{
-	Kalman_Ful,
-	Kalman_Sim
-}KALMAN_TYPE;
+#define KALMAN_CONST_VELOCITY	0
+#define KALMAN_CONST_ACCELERATION	1
 
 typedef struct {
 	float32_t arrayX[N_State_Ful];
@@ -57,7 +57,7 @@ typedef struct {
 	float32_t arrayN[2][N_State_Sim*1];
 }KALMAN_STATE_MEM_SIM;
 
-typedef struct KALMAN_FILTER_TYPE{
+typedef struct KALMAN_FILTER_STRUCT{
 	arm_matrix_instance_f32 X;
 	arm_matrix_instance_f32 U;
 	arm_matrix_instance_f32 A;
@@ -75,19 +75,27 @@ typedef struct KALMAN_FILTER_TYPE{
 	arm_matrix_instance_f32 LL[2];
 	arm_matrix_instance_f32 L[2];
 	arm_matrix_instance_f32 N[2];
-	KALMAN_TYPE  type;
+	uint16_t  kalmanType;
 	float	  dt;
-	KALMAN_STATE_MEM_FUL memFul;
-	KALMAN_STATE_MEM_SIM memSim;
-	void (*step)(struct KALMAN_FILTER_TYPE *s);
-	void (*setQ)(struct KALMAN_FILTER_TYPE *s);
-	void (*setR)(struct KALMAN_FILTER_TYPE *s);
+	void *pMem;
+	void (*step)(struct KALMAN_FILTER_STRUCT *s);
+	void (*setQ)(struct KALMAN_FILTER_STRUCT *s,float *pQ);
+	void (*setR)(struct KALMAN_FILTER_STRUCT *s,float *pR);
+	void (*store)(struct KALMAN_FILTER_STRUCT *s, uint8_t num,float z);
 }KALMAN_FILTER;
 
+typedef struct KALMAN_FILTER_HUB_STRUCT{
+	struct CENTRAL_STRUCT *pParent;
+	void (*applyFilterResult)(struct KALMAN_FILTER_HUB_STRUCT *s);
+	KALMAN_FILTER *ptKalmanFilter[JOINT_NUM_MAX][3];
+	uint16_t Num;
+	void (*attach)(struct KALMAN_FILTER_HUB_STRUCT *ptKalmanFilterHub, KALMAN_FILTER *ptKalmanFilter,uint16_t jointNum,uint16_t sensorSource);
+	void (*stepAll)(struct KALMAN_FILTER_HUB_STRUCT *s);
+}KALMAN_FILTER_HUB;
+
+KALMAN_FILTER *KALMANFILTER(float *q, float *r,float dt,uint16_t kalmanType);
+
+KALMAN_FILTER_HUB *KALMANFILTERHUB(struct CENTRAL_STRUCT *);
 
 
-void kalman_setQ(KALMAN_FILTER *s, float q);
-void kalman_setR(KALMAN_FILTER *s, float r);
-void kalman_Init(KALMAN_FILTER *s, float *q, float *r,float dt,KALMAN_TYPE type);
-void kalman_StoreMeasure(KALMAN_FILTER *s, uint8_t num,float z);
 #endif

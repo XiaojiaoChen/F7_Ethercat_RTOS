@@ -6,7 +6,6 @@
  */
 
 #include "cifXApplicationDemo.h"
-#include "TerminalHandler.h"
 #include "cmsis_os.h"
 #include "myUsartFunctions.h"
 #include "usart.h"
@@ -14,10 +13,36 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include "main.h"
+#include "SystemPackets.h"
+#include "trajectoryGeneration.h"
+#include "Central.h"
+#include "myPID.h"
+#include "OS_Dependent.h"
 UART_DEVICE UsartDevice;
 
+uint8_t usartLocalRxBuffer[UART_RX_BUF_SIZE];
+extern uint16_t start_transmission;
 
+APP_TERMINAL_CMD_T g_tTerminalCommands[] =
+{
+  {OneJoint_VALVE_0,         "v1",    "Change Voltage 0"},
+  {OneJoint_VALVE_1,         "v2",      "Change Voltage 1"},
+  {OneJoint_PRESSURE_0,        "p1",      "write var val"},
+  {OneJoint_PRESSURE_1,       "p2",  "firmware info"},
+  {OneJoint_KP,       "kp",  "hardware info"},
+  {OneJoint_KI,  "ki",      "display input data image"},
+  {OneJoint_KD, "kd",     "display output data image"},
+  {OneJoint_STIFFNESS,         "k",     "display variables"},
+  {OneJoint_QUIT,         "s",    "returns from main function"},
+  {OneJoint_START,         "g",    "returns from main function"},
+  {OneJoint_ZERO,         "z",    "returns from main function"},
+  {OneJoint_FLOW,         "f",    "returns from main function"},
+  {OneJoint_START_USART,         "(",    "returns from main function"},
+  {OneJoint_STOP_USART,         ")",    "returns from main function"},
+  {OneJoint_POSITION,         "a",    "returns from main function"},
+  {OneJoint_FEEDBACK,         "t",    "returns from main function"},
 
+};
 
 /*This file enables to use printf() to output strings to a uart:
  * 1.None blocking Tx and Rx using DMA
@@ -39,31 +64,161 @@ UART_DEVICE UsartDevice;
  *
  */
 
+void TerminalCommandHandler()
+{
+  float   val=0;
+  float   angle_temp=0;
+  float	  line_temp=TRAJ_GEN_STEP_SCURVE;
+  uint32_t  tduration;
+
+
+
+  /*get commands from RxBuffer*/
+   UsartDevice.iArgc=sscanf((char *)UsartDevice.RxBuf, "%s %f %f %f", UsartDevice.szCmd, &(UsartDevice.uiArgv[0]),  &(UsartDevice.uiArgv[1]),  &(UsartDevice.uiArgv[2]));
+   val = UsartDevice.uiArgv[0];
+  UsartDevice.usartCommandCode = OneJoint_UNKNOWN;
+   for(int i=0; i<(OneJoint_LAST-1); i++){
+     if( 0 == strcmp((const char *)(UsartDevice.szCmd), (const char *)(&g_tTerminalCommands[i].szString[0]))){
+     	UsartDevice.usartCommandCode = g_tTerminalCommands[i].iCode;
+     	break;
+     }
+   }
+
+    switch(UsartDevice.usartCommandCode){
+    case OneJoint_VALVE_0:
+      ptCentral->LLsetVoltage(ptCentral,0,val);
+      break;
+
+    case OneJoint_VALVE_1:
+        ptCentral->LLsetVoltage(ptCentral,1,val);
+      break;
+
+    case OneJoint_PRESSURE_0:
+    	ptCentral->LLsetPSource(ptCentral,val);
+      break;
+
+    case OneJoint_PRESSURE_1:
+      break;
+
+    case OneJoint_KP:
+      setKp(&(ptCentral->ptControlHub->ptController[0]->pid),val);
+      break;
+
+    case OneJoint_KI:
+    	setKi(&(ptCentral->ptControlHub->ptController[0]->pid),val);
+      break;
+
+    case OneJoint_KD:
+    	setKd(&(ptCentral->ptControlHub->ptController[0]->pid),val);
+      break;
+
+    case OneJoint_STIFFNESS:
+    	ptCentral->ptNominalData->stiffness[0] = val;
+      break;
+
+    case   OneJoint_QUIT:
+    	ptCentral->LLsetPSource(ptCentral,0);
+    	ptCentral->ptActuatorHub->actuator[0][0]->act(ptCentral->ptActuatorHub->actuator[0][0],5.1);
+    	ptCentral->ptActuatorHub->actuator[0][1]->act(ptCentral->ptActuatorHub->actuator[0][1],5.1);
+    	ptCentral->gogogo = 0;
+    	ptCentral->ptControlHub->ptController[0]->state.positionFeedbackFlag = 0;
+      break;
+
+    case OneJoint_START:
+    	ptCentral->gogogo = 1;
+          break;
+
+    case OneJoint_ZERO:
+          break;
+    case OneJoint_FLOW:
+          break;
+
+    case OneJoint_START_USART:
+    	start_transmission = 1;
+          break;
+
+    case OneJoint_STOP_USART:
+    	start_transmission = 0;
+          break;
+
+    case OneJoint_POSITION:
+    	angle_temp = UsartDevice.uiArgv[0];
+    	if(UsartDevice.iArgc >= 3)
+    		line_temp = UsartDevice.uiArgv[1];
+    	if(UsartDevice.iArgc == 4)
+    		ptCentral->positionTrajectory[0].vaverage = UsartDevice.uiArgv[2];
+    	if(line_temp>=5 || line_temp<0)
+    				line_temp = 2;
+		if(angle_temp>-1.5 && angle_temp<1.5)
+		{
+			tduration =(angle_temp-ptCentral->ptSensorData->angle[0])*1000/ptCentral->positionTrajectory[0].vaverage;
+			if(tduration<0){
+				tduration=-tduration;
+			}
+			UpdateTraj(&(ptCentral->positionTrajectory[0]),
+					angle_temp,
+					HAL_GetTick(),
+					(uint32_t)tduration,
+					(TRAJ_GEN_CurveTypeDef)line_temp);
+		}
+          break;
+    case OneJoint_FEEDBACK:
+    	ptCentral->ptControlHub->ptController[0]->state.positionFeedbackFlag = 1;
+          break;
+
+    case OneJoint_UNKNOWN:
+      break;
+
+    default:
+      break;
+    }
+
+}
+
+
 /*Put this function in a loop for polling*/
 void Usart_TerminalHandler()
 {
-	char          szCmd[50]; /** note, in sscanf format string below, command length is hard coded */
-	unsigned int  uiArgv[3];
-	int           iArgc = 0;
-    int commandNum;
+	/*Only process with idle receiving detection*/
+	if (UsartDevice.Received == 1) {
 
-    if(UsartDevice.Received == 1){
+		/* Stop UART DMA Rx request if ongoing */
+		if ((UsartDevice.huart->RxState == HAL_UART_STATE_BUSY_RX) && (HAL_IS_BIT_SET(UsartDevice.huart->Instance->CR3, USART_CR3_DMAR))) {
+			CLEAR_BIT(UsartDevice.huart->Instance->CR3, USART_CR3_DMAR);
 
-    /*get commands from RxBuffer*/
-	iArgc=sscanf((char *)UsartDevice.RxBuf, "%6s %x %x %x", &szCmd[0], &uiArgv[0], &uiArgv[1], &uiArgv[2]);
-	commandNum=Term_MatchTerminalCommand(&szCmd[0]);
+			/* Abort the UART DMA Rx channel */
+			if (UsartDevice.huart->hdmarx != NULL) {
+				/* Determine how many items of data have been received */
+				UsartDevice.countRxBuf = UsartDevice.huart->RxXferSize - __HAL_DMA_GET_COUNTER(UsartDevice.huart->hdmarx);
+				UsartDevice.huart->RxXferCount = 0;
 
-	/*Process commands*/
-	TerminalCommandHandler(&tAppData, commandNum, iArgc, &uiArgv[0]);
+				/*Abort DMA*/
+				HAL_DMA_Abort(UsartDevice.huart->hdmarx);
+			}
 
-	/*clear Recived flag and Rxbuffer*/
-	 UsartDevice.Received = 0;
-	 memset(UsartDevice.RxBuf,0,UsartDevice.countRxBuf);
+			/* Disable RXNE, PE and ERR (Frame error, noise error, overrun error) interrupts */
+			CLEAR_BIT(UsartDevice.huart->Instance->CR1, (USART_CR1_RXNEIE | USART_CR1_PEIE));
+			CLEAR_BIT(UsartDevice.huart->Instance->CR3, USART_CR3_EIE);
 
-	 /*get ready for the next receive*/
-	 HAL_UART_Receive_DMA(UsartDevice.huart, UsartDevice.RxBuf, UART_RX_BUF_SIZE-1);
+			/* At end of Rx process, restore huart->RxState to Ready */
+			UsartDevice.huart->RxState = HAL_UART_STATE_READY;
+		}
 
-    }
+		/*Process commands*/
+		TerminalCommandHandler();
+
+		/*clear Recived flag*/
+		UsartDevice.Received = 0;
+
+		/*clear buffer*/
+		memset(UsartDevice.szCmd, 0, sizeof(UsartDevice.szCmd));
+		memset(UsartDevice.RxBuf, 0, UsartDevice.countRxBuf);
+		UsartDevice.countRxBuf = 0;
+	}
+
+	//Always try to start a new reception
+	HAL_UART_Receive_DMA(UsartDevice.huart, UsartDevice.RxBuf, UART_RX_BUF_SIZE - 1);
+
 }
 
 /*put this function in the main.c for initilization*/
@@ -90,7 +245,6 @@ void USART3_IRQHandler(void)
 */
 void HAL_UART_RxIdleCallback(UART_HandleTypeDef *huart)
 {
-	 UsartDevice.countRxBuf = 0;
 	 uint32_t tmp_flag = __HAL_UART_GET_FLAG(huart, UART_FLAG_IDLE);
 	 uint32_t tmp_it_source = __HAL_UART_GET_IT_SOURCE(huart, UART_IT_IDLE);
 
@@ -100,29 +254,18 @@ void HAL_UART_RxIdleCallback(UART_HandleTypeDef *huart)
 		 /*Clear Idle Flag*/
 		__HAL_UART_CLEAR_IDLEFLAG(huart);
 
-		if(huart->hdmarx != NULL){
-			/* Determine how many items of data have been received */
-			UsartDevice.countRxBuf = huart->RxXferSize -__HAL_DMA_GET_COUNTER(huart->hdmarx);
+		/*receive flag*/
+		UsartDevice.Received = 1;
 
-			HAL_DMA_Abort(huart->hdmarx);
+		/*We stop the DMA in the polling task, not here, since some data are still on the fly now*/
 
-			huart->RxXferCount = 0;
 
-			/* Disable RXNE, PE and ERR (Frame error, noise error, overrun error) interrupts*/
-			CLEAR_BIT(huart->Instance->CR1, (USART_CR1_RXNEIE | USART_CR1_PEIE));
-			CLEAR_BIT(huart->Instance->CR3, USART_CR3_EIE);
+	}
 
-			huart->RxState = HAL_UART_STATE_READY;
-
-			/*inform polling process function in the controlling task*/
-			UsartDevice.Received = 1;
-		}
-	 }
 }
 
-/*Redirect printf() to use HAL_USART_Transmit_DMA() by implementing _write function who is "weak".
- *Every printf() call would store one output string in TxBuf[producerTxBufNum]
- *This custom _write would cause printf to output the string to a Tx buffer, instead of directly output*/
+/*Redirect printf() by implementing (weak) _write function.
+ *Every printf() call would store the output string in TxBuf[], ready for Usart DMA output instead of directly output*/
 int _write(int file, char *pSrc, int len)
 {
 	uint8_t *pDes=UsartDevice.TxBuf[UsartDevice.producerTxBufNum];
@@ -147,13 +290,15 @@ int _write(int file, char *pSrc, int len)
 	/*Buffered term full, wait for consumer to reduce producerTxBufNum*/
 	while(UsartDevice.bufferedTxNum > (UART_TX_BUF_NUM-2)){
 		//Danger! May block the main program continuously !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		//This waiting mechanism is to take care of the high frequency output within a short interval during the Ethercat Initialization
-		//If the producer is always quicker than consumer, for example a high frequency output ,this function would block the program continuously
+		//This waiting mechanism is to take care of the high frequency output within a short period during the Ethercat Initialization
+		//If the producer is always quicker than consumer, for example a high frequency output ,this function would block the program permanently
 	};
-
 	return len;
 }
-
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	//printf("RxCplCall_Test\r\n");
+}
 
 /*this function would overwrite HAL's weak HAL_UART_TxCpltCallback*/
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
@@ -170,15 +315,12 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 	/*reduce one bufferedTxNum*/
 	 UsartDevice.bufferedTxNum--;
 
-
-
 	/*If it is still positive, go on consume next*/
 	if(UsartDevice.bufferedTxNum>0){
 		UsartDevice.TxStart = TIC();
 		uint8_t *px = &UsartDevice.TxBuf[UsartDevice.consumerTxBufNum][0];
 		HAL_UART_Transmit_DMA(UsartDevice.huart,px,UsartDevice.countTxBuf[UsartDevice.consumerTxBufNum]);
 	}
-
 }
 
 

@@ -7,10 +7,12 @@
 
 
 /*****************************FESTO MPYE-5-1/8-010B Valve****************************/
-static void MPYE_move(struct ACTUATOR_STRUCT * ptActuator)
+static void MPYE_move(struct ACTUATOR_STRUCT * ptActuator,float val)
 {
+
 	MPYE_VALVE *ptMPYE = (MPYE_VALVE *)ptActuator;
-	ptMPYE->ptDADev->setVoltage(ptMPYE->ptDADev,ptMPYE->DAPort,ptMPYE->base.command);
+	ptMPYE->base.command = val;
+	ptMPYE->ptDADev->setVoltage(ptMPYE->ptDADev,ptMPYE->DAPort,val);
 }
 
 MPYE_VALVE *MPYEVALVE(DA_DEVICE *ptDADev,uint16_t DAPort,uint16_t jointNum,uint16_t pos)
@@ -55,16 +57,16 @@ static void actuatorHub_moveJoint(ACTUATOR_HUB *ptActuatorHub,uint16_t jointNum)
 
 	//move the first actuator
 	ptActuator=ptActuatorHub->actuator[jointNum][0];
-	ptActuator->act(ptActuator);
+	ptActuator->act(ptActuator,ptActuator->command);
 
 	//move the second actuator
 	ptActuator=ptActuatorHub->actuator[jointNum][1];
-	ptActuator->act(ptActuator);
+	ptActuator->act(ptActuator,ptActuator->command);
 
 }
 static void actuatorHub_moveAll(ACTUATOR_HUB *ptActuatorHub)
 {
-	for(int i=0;i<JOINT_NUM;i++)
+	for(int i=0;i<JOINT_NUM_MAX;i++)
 	{
 		ptActuatorHub->moveJoint(ptActuatorHub,i);
 	}
@@ -85,38 +87,7 @@ ACTUATOR_HUB *ACTUATORHUB(struct CENTRAL_STRUCT *ptCentral)
 	ptActuatorHub->moveAll = actuatorHub_moveAll;
 
 
-	MPYE_VALVE *ptMPYE;
-	//New a Actuator attached to DAPort 0, jointNum 0, position 0
-	ptMPYE = MPYEVALVE(&(ptCentral->DADevice),0,0,0);
-	ptActuatorHub->attach(ptActuatorHub,(ACTUATOR *)ptMPYE);
 
-	//New a Actuator attached to DAPort 1, jointNum 0, position 1
-	ptMPYE = MPYEVALVE(&(ptCentral->DADevice),1,0,1);
-	ptActuatorHub->attach(ptActuatorHub,(ACTUATOR *)ptMPYE);
-
-	//New a Actuator attached to DAPort 2, jointNum 1, position 0
-	ptMPYE = MPYEVALVE(&(ptCentral->DADevice),2,1,0);
-	ptActuatorHub->attach(ptActuatorHub,(ACTUATOR *)ptMPYE);
-
-	//New a Actuator attached to DAPort 3, jointNum 1, position 1
-	ptMPYE = MPYEVALVE(&(ptCentral->DADevice),3,1,1);
-	ptActuatorHub->attach(ptActuatorHub,(ACTUATOR *)ptMPYE);
-
-	//New a Actuator attached to DAPort 4, jointNum 2, position 0
-	ptMPYE = MPYEVALVE(&(ptCentral->DADevice),4,2,0);
-	ptActuatorHub->attach(ptActuatorHub,(ACTUATOR *)ptMPYE);
-
-	//New a Actuator attached to DAPort 5, jointNum 2, position 1
-	ptMPYE = MPYEVALVE(&(ptCentral->DADevice),5,2,1);
-	ptActuatorHub->attach(ptActuatorHub,(ACTUATOR *)ptMPYE);
-
-	//New a Actuator attached to DAPort 6, jointNum 3, position 0
-	ptMPYE = MPYEVALVE(&(ptCentral->DADevice),6,3,0);
-	ptActuatorHub->attach(ptActuatorHub,(ACTUATOR *)ptMPYE);
-
-	//New a Actuator attached to DAPort 7, jointNum 3, position 1
-	ptMPYE = MPYEVALVE(&(ptCentral->DADevice),7,3,1);
-	ptActuatorHub->attach(ptActuatorHub,(ACTUATOR *)ptMPYE);
 
 
 	return ptActuatorHub;
