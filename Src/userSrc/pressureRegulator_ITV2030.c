@@ -34,8 +34,8 @@ static float ITV_getPressure(REGULATOR_DEVICE *ptITV2030Dev)
 	//read AD board buffer
 	float vtem=ptITV2030Dev->ptADDev->fChannel[ptITV2030Dev->ADPort];
 
-	//translate to pressure value
-	float ptem=(vtem-ptITV2030Dev->Voutmin)/(ptITV2030Dev->Voutmax-ptITV2030Dev->Voutmin)*(ptITV2030Dev->Pmax-ptITV2030Dev->Pmin)+ptITV2030Dev->Pmin;
+	//output: 1~5v for 0~500000, regardless of selected output range.
+	float ptem=(vtem-ptITV2030Dev->Voutmin)*12500.0f;
 
 	return ptem;
 }
@@ -64,7 +64,7 @@ REGULATOR_DEVICE *ITV2030(DA_DEVICE *ptDADev,uint16_t DAPort,AD_DEVICE *ptADDev,
 	ptITV2030Dev->Pmax = pmax;
 	ptITV2030Dev->Vinmax = 5.0f;
 	ptITV2030Dev->Vinmin = 0.0f;
-	ptITV2030Dev->Voutmin = 1.0f;  //output voltage is 1~5V acoording to ITV2030 Datasheet
+	ptITV2030Dev->Voutmin = 0.94f;  //output voltage is 1~5V acoording to ITV2030 Datasheet
 	ptITV2030Dev->Voutmax = 5.0f;
 	ptITV2030Dev->setPressure = ITV_setPressure;
 	ptITV2030Dev->getPressure = ITV_getPressure;

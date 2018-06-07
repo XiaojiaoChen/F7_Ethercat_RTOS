@@ -24,15 +24,15 @@ uint16_t PRESSURE_CS_Pins[JOINT_NUM_MAX][2] = { {PRESSURE_00_CS_Pin,PRESSURE_01_
 											{PRESSURE_30_CS_Pin,PRESSURE_31_CS_Pin}};
 
 /************************************HoneyWell 060PGSA3 gauge pressure sensor****************************************/
-static void PRESSURESPI_CS_LOW(HW060GAUGE_DEVICE *ptPRESSURESPIDev) {
+static void PRESSURESPI_CS_LOW(HWGAUGE_DEVICE *ptPRESSURESPIDev) {
 	ptPRESSURESPIDev->CS_Port->BSRR = (uint32_t) ptPRESSURESPIDev->CS_Pin << 16U;
 }
 
-static void PRESSURESPI_CS_HIGH(HW060GAUGE_DEVICE *ptPRESSURESPIDev) {
+static void PRESSURESPI_CS_HIGH(HWGAUGE_DEVICE *ptPRESSURESPIDev) {
 	ptPRESSURESPIDev->CS_Port->BSRR = (uint32_t) ptPRESSURESPIDev->CS_Pin;
 }
 
-static void HWPGSA3_readRawSPI(HW060GAUGE_DEVICE *ptPressureDev) {
+static void HWPGSA3_readRawSPI(HWGAUGE_DEVICE *ptPressureDev) {
 	uint16_t tem[2];
 	/*read SPI pressure and temperature, 4 bytes*/
 	PRESSURESPI_CS_LOW(ptPressureDev);
@@ -42,24 +42,24 @@ static void HWPGSA3_readRawSPI(HW060GAUGE_DEVICE *ptPressureDev) {
 	//ptPressureDev->rawSPITemperature = (int16_t) (tem[1] >> 5);
 }
 
-static void HWPGSA3_ValidateData(HW060GAUGE_DEVICE *pt) {
+static void HWPGSA3_ValidateData(HWGAUGE_DEVICE *pt) {
 	pt->base.pressure = (float) (pt->rawSPIPressure - pt->uOutMin) / (pt->uOutMax - pt->uOutMin) * (pt->PMax - pt->PMin) + pt->PMin; //unit Pa
 	//pt->Temperature = pt->rawSPITemperature / 10.235f - 50.0f;
 
 }
 
 static float HWPGSA3_getPressure(PRESSURE_DEVICE *ptPressureDev) {
-	HW060GAUGE_DEVICE *pt = (HW060GAUGE_DEVICE *) ptPressureDev;
+	HWGAUGE_DEVICE *pt = (HWGAUGE_DEVICE *) ptPressureDev;
 	HWPGSA3_readRawSPI(pt);
 	HWPGSA3_ValidateData(pt);
 	return pt->Pressure;
 }
 
-HW060GAUGE_DEVICE *HWPGSA3(uint16_t jointNum, uint16_t seq) {
-	HW060GAUGE_DEVICE *ptHWPGSA3 = (HW060GAUGE_DEVICE *) malloc(sizeof(HW060GAUGE_DEVICE));
+HWGAUGE_DEVICE *HWPGSA3(uint16_t jointNum, uint16_t seq) {
+	HWGAUGE_DEVICE *ptHWPGSA3 = (HWGAUGE_DEVICE *) malloc(sizeof(HWGAUGE_DEVICE));
 	if (ptHWPGSA3 == NULL)
 		return NULL;
-	memset(ptHWPGSA3, 0, sizeof(HW060GAUGE_DEVICE));
+	memset(ptHWPGSA3, 0, sizeof(HWGAUGE_DEVICE));
 
 	ptHWPGSA3->base.jointNum = jointNum;
 	ptHWPGSA3->base.position = seq;
@@ -132,7 +132,7 @@ static uint16_t pressureHub_getPressureAll(PRESSURE_HUB *ptPressureHub) {
 
 static void pressureHub_getPressureAll_DMA(PRESSURE_HUB *ptPressureHub) {
 
-	HW060GAUGE_DEVICE *ptPressureDev = (HW060GAUGE_DEVICE *) (ptPressureHub->pressureDevices[0][0]);
+	HWGAUGE_DEVICE *ptPressureDev = (HWGAUGE_DEVICE *) (ptPressureHub->pressureDevices[0][0]);
     ptPressureHub->DMAStartTime = TIC();
 	ptPressureHub->DMAnum = 0;
 	PRESSURESPI_CS_LOW(ptPressureDev);
@@ -142,7 +142,7 @@ static void pressureHub_getPressureAll_DMA(PRESSURE_HUB *ptPressureHub) {
 void pressure_SPICallback(PRESSURE_HUB *ptPressureHub) {
 
 	//close previous SPI
-	HW060GAUGE_DEVICE *ptPressureDevPre = (HW060GAUGE_DEVICE *) (*(ptPressureHub->pressureDevices[0] + ptPressureHub->DMAnum));
+	HWGAUGE_DEVICE *ptPressureDevPre = (HWGAUGE_DEVICE *) (*(ptPressureHub->pressureDevices[0] + ptPressureHub->DMAnum));
 	PRESSURESPI_CS_HIGH(ptPressureDevPre);
 
 	//post calculation
@@ -153,7 +153,7 @@ void pressure_SPICallback(PRESSURE_HUB *ptPressureHub) {
 	//check if remaining
 	if (++ptPressureHub->DMAnum < ptPressureHub->Num) {
 		//begin next SPI_DMA
-		HW060GAUGE_DEVICE *ptPressureDevNext = (HW060GAUGE_DEVICE *) (*(ptPressureHub->pressureDevices[0] + ptPressureHub->DMAnum));
+		HWGAUGE_DEVICE *ptPressureDevNext = (HWGAUGE_DEVICE *) (*(ptPressureHub->pressureDevices[0] + ptPressureHub->DMAnum));
 		PRESSURESPI_CS_LOW(ptPressureDevNext);
 		HAL_SPI_TransmitReceive_DMA(ptPressureDevNext->pressure_spi, (uint8_t *) DummyByte, (uint8_t *) (&ptPressureDevNext->rawData), 1);
 	}

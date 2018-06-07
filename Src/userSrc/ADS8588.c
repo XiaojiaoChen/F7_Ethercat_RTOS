@@ -82,6 +82,16 @@ void Init_AD(AD_DEVICE * ptADDev,uint16_t numChannel,float vMin,float vMax,SPI_H
 	ptADDev->ucDataFlag = 0;
 	ptADDev->getVoltage = AD_getVoltage;
 	ptADDev->Reset = AD_Reset;
+
+/*	ptADDev->forceP=&(ptADDev->forceTrain[TNUM/2-15]);
+	ptADDev->forcePStart=&(ptADDev->forceTrain[TNUM/2-15]);
+	ptADDev->forcePMid = &(ptADDev->forceTrain[TNUM/2]);
+	ptADDev->forcePEnd=&(ptADDev->forceTrain[TNUM/2+15]);
+
+	ptADDev->tauP=&(ptADDev->tauTrain[TNUM/2-15]);
+	ptADDev->tauPStart=&(ptADDev->tauTrain[TNUM/2-15]);
+	ptADDev->tauPMid = &(ptADDev->tauTrain[TNUM/2]);
+	ptADDev->tauPEnd=&(ptADDev->tauTrain[TNUM/2+15]);*/
 //	ptADDev->Reset(ptADDev);
 
 }

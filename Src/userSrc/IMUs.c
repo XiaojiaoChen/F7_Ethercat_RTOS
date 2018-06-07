@@ -81,7 +81,7 @@ void getSCC2130(IMU_DEVICE *ptIMUDev)
 	data = (int16_t) getDatSCC2130(ptIMUDev,SCC2130_CMD_READ_RATE);
 	ptIMUDev->AccData.AccZ = data/1962.0f;
 
-	ptIMUDev->AccData.AngleAccel =  (ptIMUDev->AccData.AccZ - cos(ptIMUDev->AccData.AngleAbsoluteStatic + ptCentral->ptSensorData->angle[0]))
+	ptIMUDev->AccData.AngleAccel =  (ptIMUDev->AccData.AccZ - cos(ptCentral->ptSensorData->angle[0]))
 									*9.8/ptIMUDev->radius;
 
 }

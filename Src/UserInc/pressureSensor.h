@@ -35,7 +35,7 @@ typedef struct PRESSURESPI_DEVICE_STRUCT{
 	SPI_HandleTypeDef *pressure_spi;
     GPIO_TypeDef *CS_Port;
     uint16_t	CS_Pin;
-}HW060GAUGE_DEVICE;
+}HWGAUGE_DEVICE;
 
 typedef struct PRESSUREANA_DEVICE_STRUCT{
 	PRESSURE_DEVICE base;
@@ -67,6 +67,6 @@ typedef struct PRESSURE_HUB_STRUCT{
 
 PRESSURE_HUB *PRESSUREHUB(struct CENTRAL_STRUCT *ptCentral);
 HW060ABSOLUTE_DEVICE *HW060PAAA5(AD_DEVICE *,uint16_t,uint16_t,uint16_t);
-HW060GAUGE_DEVICE *HWPGSA3(uint16_t,uint16_t);
+HWGAUGE_DEVICE *HWPGSA3(uint16_t,uint16_t);
 void pressure_SPICallback(PRESSURE_HUB *ptPressureHub);
 #endif /* USER_INC_PRESSURESENSOR_H_ */

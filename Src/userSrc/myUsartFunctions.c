@@ -25,10 +25,8 @@ extern uint16_t start_transmission;
 
 APP_TERMINAL_CMD_T g_tTerminalCommands[] =
 {
-  {OneJoint_VALVE_0,         "v1",    "Change Voltage 0"},
-  {OneJoint_VALVE_1,         "v2",      "Change Voltage 1"},
-  {OneJoint_PRESSURE_0,        "p1",      "write var val"},
-  {OneJoint_PRESSURE_1,       "p2",  "firmware info"},
+  {OneJoint_VOLTAGE,         "v",    "Change Voltage 0"},
+  {OneJoint_PRESSURE,        "p",      "write var val"},
   {OneJoint_KP,       "kp",  "hardware info"},
   {OneJoint_KI,  "ki",      "display input data image"},
   {OneJoint_KD, "kd",     "display output data image"},
@@ -41,7 +39,8 @@ APP_TERMINAL_CMD_T g_tTerminalCommands[] =
   {OneJoint_STOP_USART,         ")",    "returns from main function"},
   {OneJoint_POSITION,         "a",    "returns from main function"},
   {OneJoint_FEEDBACK,         "t",    "returns from main function"},
-
+  {OneJoint_PID_ILim,         "ilim",    "returns from main function"},
+  {OneJoint_PID_ULim,         "ulim",    "returns from main function"},
 };
 
 /*This file enables to use printf() to output strings to a uart:
@@ -68,11 +67,10 @@ void TerminalCommandHandler()
 {
   float   val=0;
   float   angle_temp=0;
-  float	  line_temp=TRAJ_GEN_STEP_SCURVE;
   uint32_t  tduration;
+  int32_t c1,c2;
 
-
-
+  c1 = TIC();
   /*get commands from RxBuffer*/
    UsartDevice.iArgc=sscanf((char *)UsartDevice.RxBuf, "%s %f %f %f", UsartDevice.szCmd, &(UsartDevice.uiArgv[0]),  &(UsartDevice.uiArgv[1]),  &(UsartDevice.uiArgv[2]));
    val = UsartDevice.uiArgv[0];
@@ -85,19 +83,13 @@ void TerminalCommandHandler()
    }
 
     switch(UsartDevice.usartCommandCode){
-    case OneJoint_VALVE_0:
-      ptCentral->LLsetVoltage(ptCentral,0,val);
+    case OneJoint_VOLTAGE:
+    	if(val>=0 && val<=15 && UsartDevice.uiArgv[1]>=0 && UsartDevice.uiArgv[1]<=10)
+    		ptCentral->LLsetVoltage(ptCentral,UsartDevice.uiArgv[0],UsartDevice.uiArgv[1]);
       break;
 
-    case OneJoint_VALVE_1:
-        ptCentral->LLsetVoltage(ptCentral,1,val);
-      break;
-
-    case OneJoint_PRESSURE_0:
+    case OneJoint_PRESSURE:
     	ptCentral->LLsetPSource(ptCentral,val);
-      break;
-
-    case OneJoint_PRESSURE_1:
       break;
 
     case OneJoint_KP:
@@ -142,13 +134,15 @@ void TerminalCommandHandler()
           break;
 
     case OneJoint_POSITION:
-    	angle_temp = UsartDevice.uiArgv[0];
     	if(UsartDevice.iArgc >= 3)
-    		line_temp = UsartDevice.uiArgv[1];
+    		ptCentral->positionTrajectory[0].lineType = UsartDevice.uiArgv[1];
+    	if(ptCentral->positionTrajectory[0].lineType>=5 || ptCentral->positionTrajectory[0].lineType<0)
+    		ptCentral->positionTrajectory[0].lineType = TRAJ_GEN_STEP_SCURVE;
+
     	if(UsartDevice.iArgc == 4)
     		ptCentral->positionTrajectory[0].vaverage = UsartDevice.uiArgv[2];
-    	if(line_temp>=5 || line_temp<0)
-    				line_temp = 2;
+
+    	angle_temp = UsartDevice.uiArgv[0];
 		if(angle_temp>-1.5 && angle_temp<1.5)
 		{
 			tduration =(angle_temp-ptCentral->ptSensorData->angle[0])*1000/ptCentral->positionTrajectory[0].vaverage;
@@ -159,12 +153,23 @@ void TerminalCommandHandler()
 					angle_temp,
 					HAL_GetTick(),
 					(uint32_t)tduration,
-					(TRAJ_GEN_CurveTypeDef)line_temp);
+					(TRAJ_GEN_CurveTypeDef)(ptCentral->positionTrajectory[0].lineType));
+
 		}
           break;
     case OneJoint_FEEDBACK:
     	ptCentral->ptControlHub->ptController[0]->state.positionFeedbackFlag = 1;
           break;
+
+    case OneJoint_PID_ILim:
+    	setIlim(&(ptCentral->ptControlHub->ptController[0]->pid),val);
+             break;
+
+
+    case OneJoint_PID_ULim:
+    	setUlim(&(ptCentral->ptControlHub->ptController[0]->pid),val);
+             break;
+
 
     case OneJoint_UNKNOWN:
       break;
@@ -172,6 +177,9 @@ void TerminalCommandHandler()
     default:
       break;
     }
+    c2=TIC();
+    ptCentral->process_time.terminalCommandTime = c2-c1;
+ //   printf("terminal command time: %ld\r\n",c2-c1);
 
 }
 

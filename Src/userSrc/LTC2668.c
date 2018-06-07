@@ -7,12 +7,12 @@
 #define DA_CS_LOW()  DA_CS_GPIO_Port->BSRR=(uint32_t)DA_CS_Pin<<16U;
 #define DA_CS_HIGH() DA_CS_GPIO_Port->BSRR=DA_CS_Pin;
 
-
+uint16_t DA_Transfer_Send[2];
 
 static void LTC2668_write(DA_DEVICE *ptDADevice,uint8_t dac_command, uint8_t dac_address, uint16_t dac_code)
 {
 
-  uint16_t DA_Transfer_Send[2];
+
   DA_Transfer_Send[0] = (uint16_t)(dac_command | dac_address);
   DA_Transfer_Send[1] = dac_code;
 

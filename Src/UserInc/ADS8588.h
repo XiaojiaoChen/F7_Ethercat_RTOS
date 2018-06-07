@@ -4,8 +4,7 @@
 #include "stm32f7xx_hal.h"
 
 
-
-
+#define TNUM 50
 typedef struct AD_DEVICE_STRUCT{
 	int16_t uChannel[8];
 	float fChannel[8];
@@ -21,6 +20,19 @@ typedef struct AD_DEVICE_STRUCT{
 	uint8_t ucDataFlag;
 	void (*getVoltage)(struct AD_DEVICE_STRUCT *ptADDev);
 	void (*Reset)(struct AD_DEVICE_STRUCT *ptADDev);
+
+/*	float tauTrain[TNUM];
+	float forceTrain[TNUM];
+
+	float *forceP;
+	float *forcePStart;
+	float *forcePMid;
+	float *forcePEnd;
+
+	float *tauP;
+	float *tauPStart;
+	float *tauPMid;
+	float *tauPEnd;*/
 }AD_DEVICE;
 
 void Init_AD(AD_DEVICE * ptADDev,uint16_t numChannel,float vMin,float vMax,SPI_HandleTypeDef *AD_spi);

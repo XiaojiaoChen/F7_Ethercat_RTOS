@@ -153,35 +153,75 @@ void sendTaskFunc(void const * argument)
 
   /* USER CODE BEGIN sendTaskFunc */
 	TickType_t xLastWakeTime=xTaskGetTickCount();;
-	TickType_t sendTaskPeriod=pdMS_TO_TICKS(10);   //100ms Period
+	TickType_t sendTaskPeriod=pdMS_TO_TICKS(1);   //100ms Period
+	CONTROLLER_TYPE *ptController = ptCentral->ptControlHub->ptController[0];
 	  /* Infinite loop */
   for(;;)
   {
+
+
+
+
+
+
 	  if(start_transmission){
+
+		  printf("%.3f %1.6f %2.4f %3.3f  %6.0f %6.0f %2.3f %2.3f %2.3f  %2.4f %2.4f\r\n",
+				    HAL_GetTick()/1000.0f,
+					ptCentral->ptSensorData->angle[0],
+					ptCentral->ptSensorData->velocity[0],
+					ptCentral->ptSensorData->acceleration[0],
+					ptCentral->ptSensorData->pressure[0][0],
+					ptCentral->ptSensorData->pressure[0][1],
+					ptCentral->ptSensorData->stiffness[0],
+					ptCentral->ptNominalData->stiffness[0],
+					ptController->pid.Kp,
+					ptCentral->ptSensorData->torque[0],
+					ptCentral->ptSensorData->force[0]
+					);
+
+
+
+
 	  /*************100us*********************/
-	  printf("%.3f %2.5f %2.5f %3.3f %3.3f %4.2f %4.2f %6.0f %6.0f %6.0f %6.0f  %3.3f %3.3f %2.4f %2.4f %2.4f %ld\r\n",
-	  			   HAL_GetTick()/1000.0f,
-	  			   ptCentral->ptSensorData->angle[0],
-				   ptCentral->ptNominalData->angle[0],
-				   ptCentral->ptSensorData->velocity[0],
-				   ptCentral->ptNominalData->velocity[0],
-				   ptCentral->ptSensorData->acceleration[0],
-				   ptCentral->ptNominalData->acceleration[0],
-
-				   ptCentral->ptSensorData->pressure[0][0],
-				   ptCentral->ptNominalData->pressure[0][0],
-
-				   ptCentral->ptSensorData->pressure[0][1],
-				   ptCentral->ptNominalData->pressure[0][1],
-
-				   ptCentral->ptSensorData->torque[0],
-				   ptCentral->ptSensorData->force[0],
-
-				   ptCentral->ADDevice.fChannel[0],
-				   ptCentral->ADDevice.fChannel[1],
-				   ptCentral->ADDevice.fChannel[2],
-				   ptCentral->process_time.taskTime1
-				   );
+//	  printf("%.3f  %1.6f %2.4f %3.3f  %1.6f %2.4f %3.3f    %6.0f %6.0f %6.0f %6.0f    %2.3f %2.3f  %1.6f %1.6f %.6f %.6f       %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f     %3.4f %3.4f %.6f %.6f %.6f %.6f  %.6f %.6f %.6f   %2.4f %2.4f\r\n",
+//	  			   HAL_GetTick()/1000.0f,
+//				   ptCentral->ptNominalData->angle[0],
+//				   ptCentral->ptNominalData->velocity[0],
+//				   ptCentral->ptNominalData->acceleration[0],
+//	  			   ptCentral->ptSensorData->angle[0],
+//				   ptCentral->ptSensorData->velocity[0],
+//				   ptCentral->ptSensorData->acceleration[0],
+//				   ptCentral->ptSensorData->pressure[0][0],
+//				   ptCentral->ptSensorData->pressure[0][1],
+//				   ptCentral->ptNominalData->pressure[0][0],
+//				   ptCentral->ptNominalData->pressure[0][1],
+//				   ptCentral->ptSensorData->stiffness[0],
+//				   ptCentral->ptNominalData->stiffness[0],
+//				   ptController->pOut[0],
+//				   ptController->pOut[1],
+//				   0.0f,
+//				   0.0f,
+//				   ptController->state.m1,
+//				   ptController->state.m2,
+//				   ptController->state.m1dpos,
+//				   ptController->state.m1dpre,
+//				   ptController->state.m1dplus,
+//				   ptController->state.m2dpos,
+//				   ptController->state.m2dpre,
+//				   ptController->state.m2dplus,
+//				   ptCentral->ptSensorData->torque[0],
+//				   ptCentral->ptSensorData->force[0],
+//				   ptController->pid.P,
+//				   ptController->pid.I,
+//				   ptController->pid.D,
+//				   ptController->pid.U,
+//				   ptController->pid.Kp,
+//				   ptController->pid.Ki,
+//				   ptController->pid.Kd,
+//				   ptCentral->ADDevice.fChannel[0],
+//				   ptCentral->ADDevice.fChannel[1]
+//				   );
 	  }
 	  vTaskDelayUntil(&xLastWakeTime,sendTaskPeriod);
   }
@@ -196,19 +236,20 @@ void EthPacketTaskFunc(void const * argument)
 	TickType_t EthPacketTaskPeriod=pdMS_TO_TICKS(10);   //10ms Period for command handle
 	int32_t lRet;
     lRet = Protocol_SendFirstPacket(&tAppData);
-
+	int32_t c1,c2;
   /* Infinite loop */
     /****100 us****/
   for(;;)
   {
 	  while(tAppData.fRunning && lRet == CIFX_NO_ERROR){
-
+		  c1=TIC();
 		/** check and process incoming packets */
 		  lRet = EthercatPacketEventHandler();
 
 		/* process Terminal command, if any.*/
 		  Usart_TerminalHandler();
-
+		  c2=TIC();
+		  ptCentral->process_time.terminalTaskTime = c2-c1;
 		  vTaskDelayUntil(&xLastWakeTime,EthPacketTaskPeriod);
 		}
 		/** remove calling of App_IODataHandler, because we don't have valid IO Data any more */
@@ -245,7 +286,7 @@ void EthCyclicTaskFunc(void const * argument)
 
 	  }
 	  c4 = TIC();
-	  ptCentral->process_time.taskTime1 = c4-c1;
+	  ptCentral->process_time.controlTaskTime = c4-c1;
 	  vTaskDelayUntil(&xLastWakeTime,EthCyclicTaskPeriod);
   }
   /* USER CODE END EthCyclicTaskFunc */

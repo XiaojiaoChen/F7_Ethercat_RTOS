@@ -10,13 +10,13 @@
 //TRAJ_GEN positionTrajectory;
 //TRAJ_GEN stiffnessTrajectory;
 
-/*																									 Output  Pointer
- * 					  x0	 x1				 T									v0     			   *x_out   *v_out   *a_out
- * step:		      ori	destination												  Pointer of Outputposition,Outputvelocity, Outputacceleration
+/*
+ * 					  x0	 x1				 T									v0
+ * step:		      ori	destination
  * square:			  ori	amplitude        holdT
  * stepScurve:		  ori	destination      transT	  (x0->x1)
  * squareScurve:	  ori	amplitude        transT   (x0->x1 or x1->-x1)
- * sinoid:			  ori   amplitude        period/4 (0->x1)				    oriv
+ * sinoid:			  ori   amplitude        period   (0->x1)				    oriv
  */
 static void StepInit(TYPE_STEP *s,float x0,float x1,float T);
 static void SquareInit(TYPE_SQUARE *s,float x0,float x1,float T);
@@ -57,7 +57,7 @@ void UpdateTraj(TRAJ_GEN *traj,float xd,uint32_t startTime,uint32_t duration,TRA
 	traj->lineType = lineType;
 
 	traj->xd = xd;
-
+	traj->x0 = 0;
 	if (lineType == TRAJ_GEN_STEP_SCURVE) {
 		traj->tDuration = duration;
 		traj->generator = StepScurveGenerate;

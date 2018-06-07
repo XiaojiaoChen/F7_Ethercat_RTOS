@@ -17,6 +17,7 @@
 //static float ss, ss1, ss2;
 //static float f1, f2, f0, Ff;
 //static float slaw, slaw1, slaw2;
+static float Patm = 101325.0f;
 
 pCONTROLPARA pControlPara ={
 .kd = 0.5,
@@ -38,13 +39,14 @@ mCONTROLPARA mControlPara ={
 .stiffness = 12
 };
 
-mCONTROLPARA mControlParaPreset[4] = {
-{.kp = 5e-4,	.ki = 1e-4,		.kd = 1e-5,		.kflow = 20, 	.stiffness = 20,		.ulim =5e-5},     	 //HARD_QUICK
-{.kp = 5e-4,	.ki = 1e-4,		.kd = 1e-5,		.kflow = 10,	.stiffness = 20,		.ulim =5e-5},		 //HARD_SLOW
-{.kp = 5e-5,	.ki = 1e-3,		.kd = 0,		.kflow = 20,	.stiffness = 11,		.ulim =5e-5},		 //SOFT_QUICK
-{.kp = 5e-5,	.ki = 1e-3,		.kd = 0,		.kflow = 10,	.stiffness = 11,		.ulim =5e-5},	 	//SOFT_SLOW
+mCONTROLPARA mControlParaPreset[1] = {
+{.kp = 10,	.ki = 1e-2,		.kd = 1e-1,		.kflow = 15, 	.stiffness = 20,	.ilim=1,	.ulim =4}     	 //HARD_QUICK
 };
 M_CONTROLLER_MODE mMode;
+
+
+float A[2][2];
+float B[2];
 
 static void PSController_m(CONTROLLER_TYPE *ptController);
 static void PSController_pm(CONTROLLER_TYPE *ptController);
@@ -138,6 +140,7 @@ void controller_controlFunc(CONTROLLER_TYPE *ptController) {
 			PSController_m(ptController);
 			ptCentral->ptNominalData->pressure[num][0] = ptController->pre[0].Nom;
 			ptCentral->ptNominalData->pressure[num][1] = ptController->pre[1].Nom;
+			ptCentral->ptSensorData->stiffness[num] = ptController->stiff.Real;
 			//or PSController_p();
 			//or PSController_pm();
 			break;
@@ -172,11 +175,12 @@ CONTROLLER_TYPE *CONTROLLER(uint16_t jointNum)
 	ptController->control = controller_controlFunc;
 
 	//parameter
-	ptController->Pu = 200000; //update in the loop
+	ptController->Pu = Patm + 201325; //update in the loop
 	ptController->R = 287;
 	ptController->T = 273.15+28; //could be updated in the loop
 	ptController->g = 9.8;
 	ptController->gama = 1.4;
+	initPID(&(ptController->pid),mControlParaPreset[0].kp,mControlParaPreset[0].ki,mControlParaPreset[0].kd,mControlParaPreset[0].ilim,-mControlParaPreset[0].ilim,mControlParaPreset[0].ulim,-mControlParaPreset[0].ulim);
 
 	return ptController;
 }
@@ -248,6 +252,7 @@ void PSController_m(CONTROLLER_TYPE *ptController) {
 	 float x1d = ptController->pos.Nom;
 	 float x2 =ptController->vel.Real;
 
+
 	 float p1 =ptController->pre[0].Real;
 	 float p2 =ptController->pre[1].Real;
 
@@ -263,12 +268,12 @@ void PSController_m(CONTROLLER_TYPE *ptController) {
 	float  x01d = x0 - x1d;
 	float  x00 = x0+x1;
 	float  x01 = x0-x1;
-
+	float  RTx02 = 2*RT*x0;
 	ptController->Pu = ptCentral->ptRegulatorHub->pressureCommand[0];
 	if(ptController->Pu>400001 || ptController->Pu<-1)
 	{
 		printf("wrong pressure source");
-		ptController->Pu = 200000;
+		ptController->Pu = 301325;
 	}
 
 	 if (x2 < 0.05 && x2 > -0.05)
@@ -281,37 +286,48 @@ void PSController_m(CONTROLLER_TYPE *ptController) {
 	 pS->m1 = p1 * pS->v1 / RT;
 	 pS->m2 = p2 * pS->v2 / RT;
 
-	 pS->m1dpre = (x00d * x00d * (myjoint.I * ptController->acc.Nom + myjoint.K * ptController->pos.Nom + Gr )
-			 	 + x00d * x00d * x01d * ( ptController->stiff.Nom - myjoint.K - Grx) / ptController->gama)
-				/ (2 *RT * x0);
-	 pS->m2dpre = (-x01d * x01d* (myjoint.I * ptController->acc.Nom + myjoint.K * ptController->pos.Nom + Gr )
-			     + x01d * x01d * x00d* (ptController->stiff.Nom - myjoint.K - Grx) / ptController->gama )
-				/ (2 * RT * x0);
 
 	 if (ptController->pos.Err < 0.005 && ptController->pos.Err > -0.005)
-	 {
-		 x1 = x1d;
-	 }
-
+		 {
+			 x1 = x1d;
+		 }
 	 if(pS->positionFeedbackFlag){
-		 //update m1d
-		 updatePID(&ptController->pid, x1d, x1, &pS->m1dplus);
+			 //update m1d
+			 updatePID(&ptController->pid, x1d, x1, &pS->m1dplus);
 
-		 //update m2d maintaining stiffness unchanged
-		 pS->m2dplus = -x00 * x00/x01/x01 * pS->m1dplus;
-	 }
+			 //update m2d maintaining stiffness unchanged
+			 pS->m2dplus = -x00 * x00/x01/x01 * pS->m1dplus;
+		 }
 	 else {
 		 pS->m1dplus = 0;
 		 pS->m2dplus = 0;
 	 }
 
-	 pS->m1dpos = pS->m1dpre + pS->m1dplus;
-	 pS->m2dpos = pS->m2dpre + pS->m2dplus;
+	 A[0][0] = x00d*x00d/RTx02;
+	 A[0][1] = A[0][0]*x01d/ptController->gama;
+	 A[1][0] = -x01d*x01d/RTx02;
+	 A[1][1] = -A[1][0]*x00d/ptController->gama;
+
+	 B[0] = myjoint.I * ptController->acc.Nom + myjoint.K * ptController->pos.Nom + Gr +  pS->m1dplus;
+	 B[1] = ptController->stiff.Nom - myjoint.K - Grx;
+
+	 pS->m1dpos = A[0][0]*B[0]+A[0][1]*B[1];
+	 pS->m2dpos = A[1][0]*B[0]+A[1][1]*B[1];
+
+
+//	 pS->m1dpre = (x00d * x00d * (myjoint.I * ptController->acc.Nom + myjoint.K * ptController->pos.Nom + Gr )
+//			 	 + x00d * x00d * x01d * ( ptController->stiff.Nom - myjoint.K - Grx) / ptController->gama)
+//				/ (2 *RT * x0);
+//	 pS->m2dpre = (-x01d * x01d* (myjoint.I * ptController->acc.Nom + myjoint.K * ptController->pos.Nom + Gr )
+//			     + x01d * x01d * x00d* (ptController->stiff.Nom - myjoint.K - Grx) / ptController->gama )
+//				/ (2 * RT * x0);
+
 
 	 ptController->pre[0].Nom =  pS->m1dpos*RT/ pS->v1;
 	 ptController->pre[1].Nom =  pS->m2dpos*RT/ pS->v2;
 
-
+	 ptController->stiff.Real =  myjoint.K	- myjoint.rotaryPlate.m * ptController->g * myjoint.rotaryPlate.com * sin(x1)
+				+ RT * ptController->gama	* (pS->m1/x00/x00 + pS->m2/x01/x01);
 
 	 pS->flow1_cal = -mControlPara.kflow * (pS->m1 - pS->m1dpos);
 	 pS->flow2_cal = -mControlPara.kflow * (pS->m2 - pS->m2dpos);

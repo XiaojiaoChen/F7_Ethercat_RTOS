@@ -114,6 +114,7 @@ struct __TRAJ_GEN{
 	float v_out;
 	float a_out;
 	float vaverage;
+	float fre;
 	TYPE_STEP   step;
 	TYPE_SQUARE square;
 	TYPE_STEPSCURVE stepScurve;

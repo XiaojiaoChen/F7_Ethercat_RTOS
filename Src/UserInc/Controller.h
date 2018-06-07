@@ -6,7 +6,11 @@
 
 #include "stm32f7xx.h"
 #include "myPID.h"
+#include "arm_math.h"
 #include <Central.h>
+
+
+
 
 
 typedef enum{
@@ -37,6 +41,7 @@ typedef struct {
 	float kd;
 	float kflow;
 	float stiffness;
+	float ilim;
 	float ulim;
 }mCONTROLPARA;
 extern  mCONTROLPARA mControlPara;

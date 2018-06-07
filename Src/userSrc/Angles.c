@@ -134,7 +134,7 @@ static void AS5048_ValidateData(AS5048_DEVICE *ptAS5048Dev,uint16_t AS5048RawDat
 				AS5048RawAngleTemp = ptAS5048Dev->RawAnglePre;
 			}
 		    ptAS5048Dev->RawAngle = AS5048RawAngleTemp;
-			ptAS5048Dev->base.angle=ptAS5048Dev->RawAngle+ptAS5048Dev->loops*2*M_PI-ptAS5048Dev->Offset;
+			ptAS5048Dev->base.angle=ptAS5048Dev->RawAngle+ptAS5048Dev->loops*2*M_PI-ptAS5048Dev->Offset+ptCentral->ptIMUHub->IMUDevices[0]->AccData.AngleAbsoluteStatic;
 			ptAS5048Dev->RawAnglePre = ptAS5048Dev->RawAngle;
 			ptAS5048Dev->AnglePre = ptAS5048Dev->base.angle;
 		}

@@ -1,7 +1,6 @@
 #include "PlantModel.h"
 
 struct MYJOINT myjoint={
-		.Psource=301325,
 		.rotaryPlate={
 			.r=0.06,
 			.m=0.943,//0.523,

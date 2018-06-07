@@ -89,7 +89,7 @@ static void central_updateData(struct CENTRAL_STRUCT *ptCentral) {
 			}
 
 			ptCentral->ptSensorData->torque[0] = ptCentral->ADDevice.fChannel[0];
-			ptCentral->ptSensorData->force[0]= ptCentral->ADDevice.fChannel[1];
+			ptCentral->ptSensorData->force[0]= ptCentral->ADDevice.fChannel[1]*100;
 
 
 		}
@@ -162,6 +162,7 @@ void Init_Central(CENTRAL *ptCentral, APP_DATA_T *EthercatAppData) {
 	//Init DA Device Instance
 	Init_DA(&ptCentral->DADevice, 0, 10, &hspi_DA);
 
+
 	/*****************New a IMUHub on heap**************************************/
 	IMU_HUB * ptIMUHub = IMUHUB(ptCentral);
 	IMU_DEVICE *ptSCC2130Dev = SCC2130(0);
@@ -173,6 +174,8 @@ void Init_Central(CENTRAL *ptCentral, APP_DATA_T *EthercatAppData) {
 	AS5048_DEVICE *ptAS5048Dev;
 	ptAS5048Dev = AS5048(0);
 	ptAngleHub->attach(ptAngleHub,(ANGLE_DEVICE *)ptAS5048Dev);
+
+
 //	ptAS5311Dev = AS5311(0);
 //	ptAngleHub->attach(ptAngleHub,(ANGLE_DEVICE *)ptAS5311Dev);
 //	ptAS5311Dev = AS5311(1);
@@ -185,23 +188,23 @@ void Init_Central(CENTRAL *ptCentral, APP_DATA_T *EthercatAppData) {
 
 	/*****************New a pressureHub on heap***************************************/
 	PRESSURE_HUB *ptPressureHub = PRESSUREHUB(ptCentral);
-	HW060GAUGE_DEVICE *ptHW060PGSA3;
-	ptHW060PGSA3 = HWPGSA3(0,0);
-	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHW060PGSA3);
-	ptHW060PGSA3 = HWPGSA3(0,1);
-	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHW060PGSA3);
-	ptHW060PGSA3 = HWPGSA3(1,0);
-	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHW060PGSA3);
-	ptHW060PGSA3 = HWPGSA3(1,1);
-	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHW060PGSA3);
-	ptHW060PGSA3 = HWPGSA3(2,0);
-	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHW060PGSA3);
-	ptHW060PGSA3 = HWPGSA3(2,1);
-	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHW060PGSA3);
-	ptHW060PGSA3 = HWPGSA3(3,0);
-	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHW060PGSA3);
-	ptHW060PGSA3 = HWPGSA3(3,1);
-	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHW060PGSA3);
+	HWGAUGE_DEVICE *ptHWPGSA3;
+	ptHWPGSA3 = HWPGSA3(0,0);
+	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHWPGSA3);
+	ptHWPGSA3 = HWPGSA3(0,1);
+	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHWPGSA3);
+	ptHWPGSA3 = HWPGSA3(1,0);
+	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHWPGSA3);
+	ptHWPGSA3 = HWPGSA3(1,1);
+	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHWPGSA3);
+	ptHWPGSA3 = HWPGSA3(2,0);
+	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHWPGSA3);
+	ptHWPGSA3 = HWPGSA3(2,1);
+	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHWPGSA3);
+	ptHWPGSA3 = HWPGSA3(3,0);
+	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHWPGSA3);
+	ptHWPGSA3 = HWPGSA3(3,1);
+	ptPressureHub->attach(ptPressureHub,(PRESSURE_DEVICE *)ptHWPGSA3);
 
 
 
@@ -277,6 +280,12 @@ void Init_Central(CENTRAL *ptCentral, APP_DATA_T *EthercatAppData) {
 	/**********************Init Plant parameters*******************/
 	Init_myjoint();
 
+	/***valve*****/
+	LLSetVoltage(ptCentral,0,5.2);
+	LLSetVoltage(ptCentral,1,5.2);
+
+	//regulator
+	LLSetPSource(ptCentral,0);
 
 }
 

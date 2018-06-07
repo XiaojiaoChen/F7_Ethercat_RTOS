@@ -34,7 +34,6 @@ struct MYJOINT{
 	float K;
 	float x0;
 	float lamda;
-	float Psource;
 	struct Rotary_Plate rotaryPlate;
 	struct SHELINDER shelinder1;
 	struct SHELINDER shelinder2;

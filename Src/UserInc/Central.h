@@ -43,8 +43,9 @@ struct PROCESS_TIME{
 	int32_t EthercatIOTime;
 	int32_t EthercatPacketTime;
 	int32_t ControlTime;
-	int32_t taskTime1;
-	int32_t taskTime2;
+	int32_t terminalCommandTime;
+	int32_t controlTaskTime;
+	int32_t terminalTaskTime;
 };
 
 /***********State*********************************/

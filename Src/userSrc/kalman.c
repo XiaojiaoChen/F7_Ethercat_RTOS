@@ -250,7 +250,7 @@ void kalmanHub_attach(struct KALMAN_FILTER_HUB_STRUCT *ptKalmanFilterHub, KALMAN
 
 void kalmanHub_stepAll(struct KALMAN_FILTER_HUB_STRUCT *s)
 {
-	for(int i=0;i<JOINT_NUM_MAX;i++)
+	for(int i=0;i<1;i++)
 		{
 			if(s->ptKalmanFilter[i][0]!=NULL){
 				//angle store

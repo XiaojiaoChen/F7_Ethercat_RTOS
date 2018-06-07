@@ -7,8 +7,8 @@
 
 #include "myPID.h"
 
-PID_Type anglePID;
-PID_Type *anglePIDP=&anglePID;
+PID_Type myPIDLocal;
+PID_Type *myPIDLocalP=&myPIDLocal;
 
 /* PID update function. Should be called every dt seconds.
  *  input r:reference
@@ -33,6 +33,11 @@ void updatePID(PID_Type *pid,float r, float y,float *u)
 
 	//I_part
 	pid->I = pid->I + pid->Kp * pid->Ki * err;
+	if(pid->I > pid->Imax)
+		pid->I = pid->Imax;
+	else if(pid->I < pid->Imin)
+		pid->I = pid->Imin;
+
 
 	//D_part
 	//first order low-pass
@@ -55,7 +60,7 @@ void updatePID(PID_Type *pid,float r, float y,float *u)
 	*u=pid->U;
 }
 
-void initPID(PID_Type *pid,float kp,float ki,float kd,float umax,float umin)
+void initPID(PID_Type *pid,float kp,float ki,float kd,float imax,float imin,float umax,float umin)
 {
 	 pid->Kp=kp;
 	 pid->Ki=ki;
@@ -66,13 +71,15 @@ void initPID(PID_Type *pid,float kp,float ki,float kd,float umax,float umin)
 	 pid->Direction=1;
 	 pid->DFStore[0]=0;
 	 pid->DFStore[1]=0;
-	 pid->Tau=1;
+	 pid->Tau=0.01;
 	 pid->DFCoeff[0]=2.0f / (pid->Dt + 2*pid->Tau);
 	 pid->DFCoeff[1]=(pid->Dt - 2*pid->Tau) / (pid->Dt + 2*pid->Tau);
 	 pid->P=0;
 	 pid->I=0;
 	 pid->D=0;
 	 pid->U=0;
+	 pid->Imax = imax;
+	 pid->Imin = imin;
 	 pid->Umax=umax;//5e-4;
 	 pid->Umin=umin;//-5e-4;
 }
@@ -132,12 +139,14 @@ void setDir(PID_Type *pid, float dir)
 		pid->Direction = dir;
 }
 
-void setUmax(PID_Type *pid, float umax)
+void setUlim(PID_Type *pid, float ulim)
 {
-	pid->Umax = umax;
+	pid->Umax = ulim;
+	pid->Umin = -ulim;
 }
 
-void setUmin(PID_Type *pid, float umin)
+void setIlim(PID_Type *pid, float ilim)
 {
-	pid->Umin = umin;
+	pid->Imax = ilim;
+	pid->Imin = -ilim;
 }
