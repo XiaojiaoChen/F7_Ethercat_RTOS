@@ -38,6 +38,22 @@ struct MYJOINT myjoint={
 
 
 
+struct YIJUAN_ROTARY_PLANT YiJuanPlant;
+
+void Init_YiJuanPlant()
+{
+
+  YiJuanPlant.Psource=100000+101325;
+  YiJuanPlant.rA=6.9e-5;
+  YiJuanPlant.x0=3.1415926;
+  YiJuanPlant.v0=2*YiJuanPlant.x0*YiJuanPlant.rA;
+  YiJuanPlant.I = 0.00001; //approx
+  YiJuanPlant.K = 7; //3.283048 ;//(Nm)  0.0573(Nm/degree)
+  YiJuanPlant.F = 0;
+  YiJuanPlant.fm = 0;
+  YiJuanPlant.fc = 0;
+  YiJuanPlant.kv = 0;
+}
 
 
 void Init_myjoint()

@@ -23,7 +23,7 @@ static float R_KF_AS5048[]={1e-8,1e-5,10};
 static float Q_KF_PressureSPI[]={1e12};
 static float R_KF_PressureSPI[]={4000};
 static float kalmanUpdateRate = 0.001;
-
+float YiangleOffset=3.141;
 /*update sensor data, to be sent in the EthercatCyclicIODataHandler()*/
 static void central_updateData(struct CENTRAL_STRUCT *ptCentral) {
 	int32_t lc1, lc2,lc3,lc4,lc5,lc6;
@@ -51,6 +51,9 @@ static void central_updateData(struct CENTRAL_STRUCT *ptCentral) {
 		ptCentral->ptAngleHub->getAngleAll(ptCentral->ptAngleHub);
 		lc3 = TIC();
 
+#ifdef YIJUAN
+		ptCentral->ptAngleHub->angles[0]=ptCentral->ADDevice.fChannel[6]/4.9*2*3.1415926f-YiangleOffset;
+#endif
 		/*get IMU, blocking. This would take 100us for 4 channels*/
 		ptCentral->ptIMUHub->getIMU(ptCentral->ptIMUHub,0);
 		lc4 = TIC();
@@ -241,7 +244,10 @@ void Init_Central(CENTRAL *ptCentral, APP_DATA_T *EthercatAppData) {
 	KALMAN_FILTER_HUB *ptKalmanFilterHub = KALMANFILTERHUB(ptCentral);
 	KALMAN_FILTER *ptKalmanFilter;
 	//Angle
-	ptKalmanFilter = KALMANFILTER(Q_KF_AS5048, R_KF_AS5048,kalmanUpdateRate,KALMAN_CONST_ACCELERATION);
+//	ptKalmanFilter = KALMANFILTER(Q_KF_AS5048, R_KF_AS5048,kalmanUpdateRate,KALMAN_CONST_ACCELERATION);
+	float Q_KF_yijuan[]={40};
+	float R_KF_yijuan[]={2e-5};
+	ptKalmanFilter = KALMANFILTER(Q_KF_yijuan, R_KF_yijuan,kalmanUpdateRate,KALMAN_CONST_VELOCITY);
 	ptKalmanFilterHub->attach(ptKalmanFilterHub,ptKalmanFilter,0,0);
 	//Pressure
 	ptKalmanFilter = KALMANFILTER(Q_KF_PressureSPI, R_KF_PressureSPI,kalmanUpdateRate,KALMAN_CONST_VELOCITY);
@@ -287,6 +293,8 @@ void Init_Central(CENTRAL *ptCentral, APP_DATA_T *EthercatAppData) {
 	//regulator
 	LLSetPSource(ptCentral,0);
 
+	 Init_YiJuanPlant();
+	 yiinitControlPara();
 }
 
 

@@ -5,11 +5,10 @@
 #include "math.h"
 #include "MPYEValve.h"
 #include "myPID.h"
-
+#include "ControllerYijuan.h"
 #include "trajectoryGeneration.h"
 #include "string.h"
 #include "cifXApplicationDemo.h"
-//
 //static float angle_Max[1] = {1.5};
 //static float angle_Min[1] = {-1.5};
 //
@@ -39,8 +38,11 @@ mCONTROLPARA mControlPara ={
 .stiffness = 12
 };
 
-mCONTROLPARA mControlParaPreset[1] = {
+/*mCONTROLPARA mControlParaPreset[1] = {
 {.kp = 10,	.ki = 1e-2,		.kd = 1e-1,		.kflow = 15, 	.stiffness = 20,	.ilim=1,	.ulim =4}     	 //HARD_QUICK
+};*/
+mCONTROLPARA mControlParaPreset[1] = {
+{.kp = 30,	.ki = 0,		.kd = 0.2,		.kflow = 20, 	.stiffness = 16,	.ilim=1,	.ulim =4}     	 //HARD_QUICK
 };
 M_CONTROLLER_MODE mMode;
 
@@ -148,7 +150,6 @@ void controller_controlFunc(CONTROLLER_TYPE *ptController) {
 		case TorqueControl:
 
 			break;
-
 		}
 
 
@@ -247,6 +248,13 @@ void PSController_m(CONTROLLER_TYPE *ptController) {
 
 	 CONTROLLER_STATE *pS = &(ptController->state);
 
+#ifdef YIJUAN
+
+	 yiController();
+
+#else
+
+
 	 float x0 =myjoint.x0;
 	 float x1 =ptController->pos.Real;
 	 float x1d = ptController->pos.Nom;
@@ -334,8 +342,7 @@ void PSController_m(CONTROLLER_TYPE *ptController) {
 
 	 ptController->pOut[0] = InverseValveFlowFunc(ptController->Pu, p1, pS->flow1_cal, 1);
 	 ptController->pOut[1] = InverseValveFlowFunc(ptController->Pu, p2, pS->flow2_cal, 1);
-
-
+#endif
 }
 
 void PSController_pm(CONTROLLER_TYPE *ptController) {

@@ -18,8 +18,9 @@
 #include "Central.h"
 #include "myPID.h"
 #include "OS_Dependent.h"
+#include "ControllerYijuan.h"
 UART_DEVICE UsartDevice;
-
+extern float YiangleOffset;
 uint8_t usartLocalRxBuffer[UART_RX_BUF_SIZE];
 extern uint16_t start_transmission;
 
@@ -94,14 +95,17 @@ void TerminalCommandHandler()
 
     case OneJoint_KP:
       setKp(&(ptCentral->ptControlHub->ptController[0]->pid),val);
+      yisetKp(val);
       break;
 
     case OneJoint_KI:
     	setKi(&(ptCentral->ptControlHub->ptController[0]->pid),val);
+    	yisetKi(val);
       break;
 
     case OneJoint_KD:
     	setKd(&(ptCentral->ptControlHub->ptController[0]->pid),val);
+    	yisetKd(val);
       break;
 
     case OneJoint_STIFFNESS:
@@ -117,10 +121,12 @@ void TerminalCommandHandler()
       break;
 
     case OneJoint_START:
-    	ptCentral->gogogo = 1;
+    	ptCentral->gogogo = 1-ptCentral->gogogo;
           break;
 
     case OneJoint_ZERO:
+
+    	YiangleOffset=ptCentral->ADDevice.fChannel[6]/4.9*2*3.1415926f;
           break;
     case OneJoint_FLOW:
           break;
@@ -281,7 +287,7 @@ int _write(int file, char *pSrc, int len)
 	/*store the string to next buffer*/
 	memcpy(pDes,pSrc,len);
 	*(pDes+len)='\0';
-	UsartDevice.countTxBuf[UsartDevice.producerTxBufNum] = strlen((const char*)pDes);
+	UsartDevice.countTxBuf[UsartDevice.producerTxBufNum] = len;
 
 	/*add one bufferedTxNum, recording how many buffered strings that haven't been sent*/
 	UsartDevice.bufferedTxNum++;

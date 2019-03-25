@@ -23,13 +23,13 @@
  *
  */
 
-enum CONTROLLER_TYPE{
+enum CONTROLLER_ENUM{
 	PositionStiffnessControl = 0x00,
 	TorqueControl,
 	PressureControl
 };
 
-
+#define YIJUAN
 
 struct PROCESS_TIME{
 	int32_t usartTime;

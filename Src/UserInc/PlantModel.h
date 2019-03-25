@@ -38,6 +38,22 @@ struct MYJOINT{
 	struct SHELINDER shelinder1;
 	struct SHELINDER shelinder2;
 };
+struct YIJUAN_ROTARY_PLANT{
+  float Psource;
+  float rA;
+  float x0;
+  float v0;
+  float I;
+	float K;
+	float F;
+	float fm;
+	float fc;
+	float kv;
+};
+
+extern struct YIJUAN_ROTARY_PLANT YiJuanPlant;
+void Init_YiJuanPlant(void);
+
 extern struct MYJOINT myjoint;
 void Init_myjoint(void);
 #endif

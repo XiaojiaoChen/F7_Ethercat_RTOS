@@ -166,20 +166,29 @@ void sendTaskFunc(void const * argument)
 
 	  if(start_transmission){
 
-		  printf("%.3f %1.6f %2.4f %3.3f  %6.0f %6.0f %2.3f %2.3f %2.3f  %2.4f %2.4f\r\n",
+	/*	  printf("%.3f %1.6f %2.4f %6.0f %6.0f  %6.0f %6.0f %2.3f %2.3f %1.3f %1.3f\r\n",
 				    HAL_GetTick()/1000.0f,
 					ptCentral->ptSensorData->angle[0],
-					ptCentral->ptSensorData->velocity[0],
-					ptCentral->ptSensorData->acceleration[0],
+					ptCentral->ptControlHub->ptController[0]->vel.Real,
 					ptCentral->ptSensorData->pressure[0][0],
 					ptCentral->ptSensorData->pressure[0][1],
+					ptCentral->ptNominalData->pressure[0][0],
+					ptCentral->ptNominalData->pressure[0][1],
 					ptCentral->ptSensorData->stiffness[0],
 					ptCentral->ptNominalData->stiffness[0],
-					ptController->pid.Kp,
-					ptCentral->ptSensorData->torque[0],
-					ptCentral->ptSensorData->force[0]
+					ptController->pOut[0],
+					ptController->pOut[1]
 					);
-
+*/
+		  printf("%.3f %6.0f %6.0f  %6.0f %6.0f %2.3f %2.3f\r\n",
+					HAL_GetTick()/1000.0f,
+					ptCentral->ptSensorData->pressure[0][0],
+					ptCentral->ptSensorData->pressure[0][1],
+					ptCentral->ptNominalData->pressure[0][0],
+					ptCentral->ptNominalData->pressure[0][1],
+					ptCentral->ADDevice.fChannel[0],
+					ptCentral->ADDevice.fChannel[1]
+					);
 
 
 
